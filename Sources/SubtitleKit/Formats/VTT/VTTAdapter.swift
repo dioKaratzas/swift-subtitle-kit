@@ -25,11 +25,11 @@ struct VTTAdapter: SubtitleFormatAdapter {
                 continue
             }
 
-            let timingIndex: Int?
-            if let firstTiming = lines.firstIndex(where: { $0.contains("-->") }) {
-                timingIndex = firstTiming
-            } else {
-                timingIndex = nil
+            let timingRegex = try NSRegularExpression(
+                pattern: #"^\s*(?:\d{1,2}:)?\d{1,2}:\d{1,2}(?:[.,]\d{1,3})?\s*-->\s*(?:\d{1,2}:)?\d{1,2}:\d{1,2}(?:[.,]\d{1,3})?.*$"#
+            )
+            let timingIndex = lines.firstIndex { line in
+                RegexUtils.firstMatch(timingRegex, in: line) != nil
             }
 
             if let timingIndex, timingIndex < lines.count {
@@ -78,7 +78,8 @@ struct VTTAdapter: SubtitleFormatAdapter {
                 continue
             }
 
-            throw SubtitleError.malformedBlock(format: .vtt, details: block)
+            // WebVTT allows additional blocks (comments/regions/custom blocks). Keep parser permissive.
+            continue
         }
 
         return SubtitleDocument(format: .vtt, entries: entries)
@@ -119,12 +120,12 @@ struct VTTAdapter: SubtitleFormatAdapter {
         if let range = first.range(of: " ") {
             let key = String(first[..<range.lowerBound])
             let value = String(first[range.upperBound...])
-            if key.range(of: #"^[A-Z]+$"#, options: .regularExpression) != nil {
+            if key.range(of: #"^[A-Za-z]+$"#, options: .regularExpression) != nil {
                 return SubtitleMetadata(id: id, key: key, value: .text(value))
             }
         }
 
-        if first.range(of: #"^[A-Z]+$"#, options: .regularExpression) != nil {
+        if first.range(of: #"^[A-Za-z][A-Za-z ]*$"#, options: .regularExpression) != nil {
             let remainder = lines.dropFirst().joined(separator: "\n")
             return SubtitleMetadata(id: id, key: first, value: .text(remainder))
         }
