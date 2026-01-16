@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol SubtitleFormatAdapter: Sendable {
+protocol SubtitleFormatAdapter: Sendable {
     var format: SubtitleFormat { get }
     var aliases: [SubtitleFormat] { get }
 
@@ -10,11 +10,7 @@ public protocol SubtitleFormatAdapter: Sendable {
 }
 
 extension SubtitleFormatAdapter {
-    public var aliases: [SubtitleFormat] {
+    var aliases: [SubtitleFormat] {
         [format]
-    }
-
-    public func supports(_ format: SubtitleFormat) -> Bool {
-        aliases.contains(format)
     }
 }

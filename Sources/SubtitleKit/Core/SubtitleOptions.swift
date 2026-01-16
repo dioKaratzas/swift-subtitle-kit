@@ -2,33 +2,36 @@ import Foundation
 
 public struct SubtitleParseOptions: Sendable, Hashable {
     public var format: SubtitleFormat?
+    public var fileName: String?
     public var fileExtension: String?
     public var preserveWhitespaceCaptions: Bool
     public var fps: Double?
 
     public init(
         format: SubtitleFormat? = nil,
+        fileName: String? = nil,
         fileExtension: String? = nil,
         preserveWhitespaceCaptions: Bool = false,
         fps: Double? = nil
     ) {
         self.format = format
+        self.fileName = fileName
         self.fileExtension = fileExtension
         self.preserveWhitespaceCaptions = preserveWhitespaceCaptions
         self.fps = fps
     }
 }
 
-public struct SubtitleSerializeOptions: Sendable, Hashable {
-    public var format: SubtitleFormat
-    public var lineEnding: LineEnding
-    public var fps: Double?
-    public var samiTitle: String?
-    public var samiLanguageName: String
-    public var samiLanguageCode: String
-    public var closeSMITags: Bool
+struct SubtitleSerializeOptions: Sendable, Hashable {
+    var format: SubtitleFormat
+    var lineEnding: LineEnding
+    var fps: Double?
+    var samiTitle: String?
+    var samiLanguageName: String
+    var samiLanguageCode: String
+    var closeSMITags: Bool
 
-    public init(
+    init(
         format: SubtitleFormat,
         lineEnding: LineEnding = .crlf,
         fps: Double? = nil,
@@ -44,6 +47,18 @@ public struct SubtitleSerializeOptions: Sendable, Hashable {
         self.samiLanguageName = samiLanguageName
         self.samiLanguageCode = samiLanguageCode
         self.closeSMITags = closeSMITags
+    }
+}
+
+public struct SubtitleResyncOptions: Sendable, Hashable {
+    public var offset: Int
+    public var ratio: Double
+    public var useFrameValues: Bool
+
+    public init(offset: Int = 0, ratio: Double = 1.0, useFrameValues: Bool = false) {
+        self.offset = offset
+        self.ratio = ratio
+        self.useFrameValues = useFrameValues
     }
 }
 
