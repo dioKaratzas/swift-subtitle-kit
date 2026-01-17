@@ -3,7 +3,7 @@ import Foundation
 enum SubtitleDetector {
     static func detectFormat(
         content: String,
-        registry: SubtitleKit.Registry,
+        registry: SubtitleRegistry,
         fileName: String? = nil,
         fileExtension: String? = nil
     ) -> SubtitleFormat? {

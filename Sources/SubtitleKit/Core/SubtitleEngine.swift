@@ -1,42 +1,13 @@
 import Foundation
 
-struct SubtitleKit: Sendable {
-    struct Registry: Sendable {
-        private let adaptersByFormat: [SubtitleFormat: any SubtitleFormatAdapter]
-        private let detectionOrder: [any SubtitleFormatAdapter]
+struct SubtitleEngine: Sendable {
+    let registry: SubtitleRegistry
 
-        init(adapters: [any SubtitleFormatAdapter]) {
-            var map: [SubtitleFormat: any SubtitleFormatAdapter] = [:]
-            for adapter in adapters {
-                for format in adapter.aliases {
-                    map[format] = adapter
-                }
-            }
-            self.adaptersByFormat = map
-            self.detectionOrder = adapters
-        }
-
-        func adapter(for format: SubtitleFormat) -> (any SubtitleFormatAdapter)? {
-            adaptersByFormat[format]
-        }
-
-        func detect(content: String) -> SubtitleFormat? {
-            for adapter in detectionOrder where adapter.canParse(content) {
-                return adapter.format
-            }
-            return nil
-        }
-
-        var supportedFormats: [SubtitleFormat] {
-            Array(adaptersByFormat.keys).sorted { $0.rawValue < $1.rawValue }
-        }
-    }
-
-    let registry: Registry
-
-    init(registry: Registry = .default) {
+    init(registry: SubtitleRegistry = .default) {
         self.registry = registry
     }
+
+    static let `default` = SubtitleEngine()
 
     func supportedFormats() -> [SubtitleFormat] {
         registry.supportedFormats
@@ -56,12 +27,11 @@ struct SubtitleKit: Sendable {
     }
 
     func parse(_ content: String, options: SubtitleParseOptions = .init()) throws -> SubtitleDocument {
-        let normalizedInput = SubtitleNormalizer.normalizeInput(content)
         let format = options.format
             ?? (options.fileName.flatMap(SubtitleFormat.from(fileName:)))
             ?? (options.fileExtension.flatMap(SubtitleFormat.from(fileExtension:)))
             ?? detectFormat(
-                content: normalizedInput.text,
+                content: content,
                 fileName: options.fileName,
                 fileExtension: options.fileExtension
             )
@@ -73,7 +43,7 @@ struct SubtitleKit: Sendable {
             throw SubtitleError.unsupportedFormat(format.rawValue)
         }
 
-        var parsed = try adapter.parse(normalizedInput.text, options: options)
+        var parsed = try adapter.parse(content, options: options)
         if parsed.format == nil {
             parsed.format = format
         }
@@ -117,17 +87,4 @@ struct SubtitleKit: Sendable {
         }
         return updated
     }
-}
-
-extension SubtitleKit.Registry {
-    static let `default`: Self = .init(adapters: [
-        VTTAdapter(),
-        LRCAdapter(),
-        SMIAdapter(),
-        ASSAdapter(),
-        SSAAdapter(),
-        SUBAdapter(),
-        SRTAdapter(),
-        SBVAdapter(),
-    ])
 }
