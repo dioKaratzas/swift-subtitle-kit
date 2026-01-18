@@ -55,6 +55,26 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    public static func parse(
+        _ content: String,
+        format: SubtitleFormat? = nil,
+        fileName: String? = nil,
+        fileExtension: String? = nil,
+        preserveWhitespaceCaptions: Bool = false,
+        fps: Double? = nil
+    ) throws -> Subtitle {
+        try parse(
+            content,
+            options: SubtitleParseOptions(
+                format: format,
+                fileName: fileName,
+                fileExtension: fileExtension,
+                preserveWhitespaceCaptions: preserveWhitespaceCaptions,
+                fps: fps
+            )
+        )
+    }
+
     public static func load(
         from fileURL: URL,
         options: SubtitleParseOptions = .init(),
@@ -70,6 +90,61 @@ public struct Subtitle: Sendable, Hashable {
 
         let content = try String(contentsOf: fileURL, encoding: encoding)
         return try parse(content, options: parseOptions)
+    }
+
+    public static func load(
+        from fileURL: URL,
+        format: SubtitleFormat? = nil,
+        preserveWhitespaceCaptions: Bool = false,
+        fps: Double? = nil,
+        encoding: String.Encoding = .utf8
+    ) throws -> Subtitle {
+        try load(
+            from: fileURL,
+            options: SubtitleParseOptions(
+                format: format,
+                fileName: fileURL.lastPathComponent,
+                fileExtension: fileURL.pathExtension,
+                preserveWhitespaceCaptions: preserveWhitespaceCaptions,
+                fps: fps
+            ),
+            encoding: encoding
+        )
+    }
+
+    public static func convert(
+        _ content: String,
+        from sourceFormat: SubtitleFormat? = nil,
+        to targetFormat: SubtitleFormat,
+        lineEnding: LineEnding = .crlf,
+        fps: Double? = nil,
+        preserveWhitespaceCaptions: Bool = false,
+        resync: SubtitleResyncOptions? = nil,
+        samiTitle: String? = nil,
+        samiLanguageName: String = "English",
+        samiLanguageCode: String = "en-US",
+        closeSMITags: Bool = false
+    ) throws -> String {
+        var subtitle = try parse(
+            content,
+            options: SubtitleParseOptions(
+                format: sourceFormat,
+                preserveWhitespaceCaptions: preserveWhitespaceCaptions,
+                fps: fps
+            )
+        )
+        if let resync {
+            subtitle = subtitle.resync(resync)
+        }
+        return try subtitle.convertedText(
+            to: targetFormat,
+            lineEnding: lineEnding,
+            fps: fps,
+            samiTitle: samiTitle,
+            samiLanguageName: samiLanguageName,
+            samiLanguageCode: samiLanguageCode,
+            closeSMITags: closeSMITags
+        )
     }
 
     public func text(
@@ -185,8 +260,12 @@ public struct Subtitle: Sendable, Hashable {
         closeSMITags: Bool = false,
         encoding: String.Encoding = .utf8
     ) throws {
+        let outputFormat = format
+            ?? SubtitleFormat.from(fileName: fileURL.lastPathComponent)
+            ?? self.format
+
         let output = try text(
-            format: format,
+            format: outputFormat,
             lineEnding: lineEnding,
             fps: fps,
             samiTitle: samiTitle,
