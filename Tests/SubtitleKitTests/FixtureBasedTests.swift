@@ -4,16 +4,18 @@ import Testing
 
 @Suite("Fixture Parsing")
 struct FixtureParsingTests {
-    @Test("Parses real fixtures", arguments: SubtitleFormat.allCases)
-    func parseFixture(for format: SubtitleFormat) throws {
-        let content = try FixtureSupport.sampleText(for: format)
+    @Test("Parses real fixtures", arguments: FixtureSupport.fixtureFormatNames)
+    func parseFixture(for formatName: String) throws {
+        let format = FixtureSupport.format(named: formatName)
+        let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
         #expect(!subtitle.cues.isEmpty)
     }
 
-    @Test("Round-trips real fixtures", arguments: SubtitleFormat.allCases)
-    func roundTripFixture(for format: SubtitleFormat) throws {
-        let content = try FixtureSupport.sampleText(for: format)
+    @Test("Round-trips real fixtures", arguments: FixtureSupport.fixtureFormatNames)
+    func roundTripFixture(for formatName: String) throws {
+        let format = FixtureSupport.format(named: formatName)
+        let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
         let serialized = try subtitle.text(format: format, lineEnding: .lf)
         let reparsed = try Subtitle.parse(serialized, options: .init(format: format))
@@ -23,16 +25,17 @@ struct FixtureParsingTests {
         #expect(reparsed.cues.last?.endTime == subtitle.cues.last?.endTime)
     }
 
-    @Test("Converts fixture to SRT and VTT", arguments: SubtitleFormat.allCases)
-    func convertFixture(for format: SubtitleFormat) throws {
-        let content = try FixtureSupport.sampleText(for: format)
+    @Test("Converts fixture to SRT and VTT", arguments: FixtureSupport.fixtureFormatNames)
+    func convertFixture(for formatName: String) throws {
+        let format = FixtureSupport.format(named: formatName)
+        let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
 
         let asSRT = try subtitle.convert(to: .srt, lineEnding: .lf)
         let asVTT = try subtitle.convert(to: .vtt, lineEnding: .lf)
 
-        #expect(asSRT.format == .srt)
-        #expect(asVTT.format == .vtt)
+        #expect(asSRT.format.isEqual(.srt))
+        #expect(asVTT.format.isEqual(.vtt))
         #expect(!asSRT.cues.isEmpty)
         #expect(!asVTT.cues.isEmpty)
     }
@@ -71,7 +74,7 @@ struct EdgeCaseTests {
 
     @Test("Handles metadata quirks")
     func metadataQuirks() throws {
-        let lrc = try FixtureSupport.sampleText(for: .lrc)
+        let lrc = try FixtureSupport.sampleText(for: "lrc")
         let subtitle = try Subtitle.parse(lrc, options: .init(format: .lrc))
         let metaCount = subtitle.entries.filter {
             if case .metadata = $0 { return true }

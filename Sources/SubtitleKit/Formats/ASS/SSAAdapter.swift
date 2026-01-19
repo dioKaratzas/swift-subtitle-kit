@@ -1,17 +1,17 @@
 import Foundation
 
-struct SSAAdapter: SubtitleFormatAdapter {
-    let format: SubtitleFormat = .ssa
+public struct SSAFormat: SubtitleFormat {
+    public let name = "ssa"
 
-    func canParse(_ content: String) -> Bool {
+    public func canParse(_ content: String) -> Bool {
         SSACommon.isSSAContent(content)
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
-        try SSACommon.parse(content, hintedFormat: .ssa)
+    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+        try SSACommon.parse(content, hintedFormatName: name)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
-        SSACommon.serialize(document, format: .ssa, lineEnding: options.lineEnding)
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+        SSACommon.serialize(document, formatName: name, lineEnding: options.lineEnding)
     }
 }

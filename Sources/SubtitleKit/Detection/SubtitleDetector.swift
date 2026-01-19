@@ -3,24 +3,22 @@ import Foundation
 enum SubtitleDetector {
     static func detectFormat(
         content: String,
-        registry: SubtitleRegistry,
+        registry: SubtitleFormatRegistry,
         fileName: String? = nil,
         fileExtension: String? = nil
     ) -> SubtitleFormat? {
         let sanitized = SubtitleNormalizer.stripByteOrderMark(content)
 
         if let fileExtension,
-           let format = SubtitleFormat.from(fileExtension: fileExtension),
-           registry.adapter(for: format) != nil {
+           let format = registry.resolve(fileExtension: fileExtension) {
             return format
         }
 
         if let fileName,
-           let format = SubtitleFormat.from(fileName: fileName),
-           registry.adapter(for: format) != nil {
+           let format = registry.resolve(fileName: fileName) {
             return format
         }
 
-        return registry.detect(content: sanitized)
+        return registry.detectFormat(content: sanitized)
     }
 }

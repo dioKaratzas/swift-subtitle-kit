@@ -1,33 +1,54 @@
 import Foundation
 
-public enum SubtitleFormat: String, CaseIterable, Sendable, Hashable, Codable {
-    case srt
-    case vtt
-    case sbv
-    case sub
-    case ssa
-    case ass
-    case lrc
-    case smi
+public protocol SubtitleFormat: Sendable {
+    var name: String { get }
+    var aliases: [String] { get }
 
-    public var preferredFileExtension: String {
-        rawValue
-    }
+    func canParse(_ content: String) -> Bool
+    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument
+    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String
+}
 
-    public static func from(fileExtension: String) -> SubtitleFormat? {
-        let ext = fileExtension
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-            .trimmingCharacters(in: CharacterSet(charactersIn: "."))
-        return SubtitleFormat(rawValue: ext)
-    }
+public extension SubtitleFormat {
+    var aliases: [String] { [name] }
 
-    public static func from(fileName: String) -> SubtitleFormat? {
-        let trimmed = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let dot = trimmed.lastIndex(of: ".") else {
-            return nil
-        }
-        let ext = String(trimmed[trimmed.index(after: dot)...])
-        return from(fileExtension: ext)
+    func register() {
+        SubtitleFormatRegistry.register(self)
     }
+}
+
+public extension SubtitleFormat where Self == SRTFormat {
+    static var srt: SubtitleFormat { SRTFormat() }
+}
+
+public extension SubtitleFormat where Self == VTTFormat {
+    static var vtt: SubtitleFormat { VTTFormat() }
+}
+
+public extension SubtitleFormat where Self == SBVFormat {
+    static var sbv: SubtitleFormat { SBVFormat() }
+}
+
+public extension SubtitleFormat where Self == SUBFormat {
+    static var sub: SubtitleFormat { SUBFormat() }
+}
+
+public extension SubtitleFormat where Self == SSAFormat {
+    static var ssa: SubtitleFormat { SSAFormat() }
+}
+
+public extension SubtitleFormat where Self == ASSFormat {
+    static var ass: SubtitleFormat { ASSFormat() }
+}
+
+public extension SubtitleFormat where Self == LRCFormat {
+    static var lrc: SubtitleFormat { LRCFormat() }
+}
+
+public extension SubtitleFormat where Self == SMIFormat {
+    static var smi: SubtitleFormat { SMIFormat() }
+}
+
+public extension SubtitleFormat where Self == JSONFormat {
+    static var json: SubtitleFormat { JSONFormat() }
 }

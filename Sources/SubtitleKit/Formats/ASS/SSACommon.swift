@@ -1,7 +1,7 @@
 import Foundation
 
 enum SSACommon {
-    static func parse(_ content: String, hintedFormat: SubtitleFormat) throws -> SubtitleDocument {
+    static func parse(_ content: String, hintedFormatName: String) throws -> SubtitleDocument {
         let normalized = TextSanitizer.stripByteOrderMark(from: content)
         let blocks = StringTransforms.splitBlocks(normalized)
 
@@ -52,14 +52,14 @@ enum SSACommon {
                     }
                     guard pair.name.caseInsensitiveCompare("Dialogue") == .orderedSame else { continue }
                     guard !columns.isEmpty else {
-                        throw SubtitleError.malformedBlock(format: hintedFormat, details: "Missing Events format line")
+                        throw SubtitleError.malformedBlock(format: hintedFormatName, details: "Missing Events format line")
                     }
 
                     let values = splitCommaValues(pair.value, limit: columns.count)
                     let fields = zip(columns, values).map { SubtitleAttribute(key: $0.0, value: $0.1) }
 
                     guard let startValue = field("Start", in: fields), let endValue = field("End", in: fields) else {
-                        throw SubtitleError.malformedBlock(format: hintedFormat, details: line)
+                        throw SubtitleError.malformedBlock(format: hintedFormatName, details: line)
                     }
 
                     let start = try TimestampCodec.parseSSA(startValue)
@@ -87,12 +87,12 @@ enum SSACommon {
             }
         }
 
-        return SubtitleDocument(format: hintedFormat, entries: entries)
+        return SubtitleDocument(formatName: hintedFormatName, entries: entries)
     }
 
-    static func serialize(_ document: SubtitleDocument, format: SubtitleFormat, lineEnding: LineEnding) -> String {
+    static func serialize(_ document: SubtitleDocument, formatName: String, lineEnding: LineEnding) -> String {
         let eol = lineEnding.value
-        let isASS = format == .ass
+        let isASS = formatName.caseInsensitiveCompare("ass") == .orderedSame
 
         var scriptInfoLines = ["ScriptType: v4.00" + (isASS ? "+" : ""), "Collisions: Normal"]
         if let scriptInfo = document.entries.compactMap(scriptInfoMetadata).first {
@@ -100,9 +100,7 @@ enum SSACommon {
         }
 
         let styles = document.entries.compactMap { entry -> SubtitleStyle? in
-            if case let .style(style) = entry {
-                return style
-            }
+            if case let .style(style) = entry { return style }
             return nil
         }
 
@@ -188,12 +186,8 @@ enum SSACommon {
 
     private static func splitNamedLine(_ line: String) -> (name: String, value: String)? {
         let trimmed = line.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, !trimmed.hasPrefix(";") else {
-            return nil
-        }
-        guard let separator = trimmed.firstIndex(of: ":") else {
-            return nil
-        }
+        guard !trimmed.isEmpty, !trimmed.hasPrefix(";") else { return nil }
+        guard let separator = trimmed.firstIndex(of: ":") else { return nil }
         let name = String(trimmed[..<separator]).trimmingCharacters(in: .whitespaces)
         let value = String(trimmed[trimmed.index(after: separator)...]).trimmingCharacters(in: .whitespaces)
         return (name, value)

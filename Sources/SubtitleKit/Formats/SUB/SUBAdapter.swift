@@ -1,9 +1,9 @@
 import Foundation
 
-struct SUBAdapter: SubtitleFormatAdapter {
-    let format: SubtitleFormat = .sub
+public struct SUBFormat: SubtitleFormat {
+    public let name = "sub"
 
-    func canParse(_ content: String) -> Bool {
+    public func canParse(_ content: String) -> Bool {
         let text = TextSanitizer.stripByteOrderMark(from: content)
         guard let regex = try? NSRegularExpression(pattern: #"^\{\d+\}\{\d+\}.*$"#, options: [.anchorsMatchLines]) else {
             return false
@@ -11,7 +11,7 @@ struct SUBAdapter: SubtitleFormatAdapter {
         return RegexUtils.firstMatch(regex, in: text) != nil
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
         let fps = try normalizedFPS(options.fps)
         let normalized = TextSanitizer.stripByteOrderMark(from: content)
         let lines = StringTransforms.lines(normalized)
@@ -26,7 +26,7 @@ struct SUBAdapter: SubtitleFormatAdapter {
                 if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     continue
                 }
-                throw SubtitleError.malformedBlock(format: .sub, details: line)
+                throw SubtitleError.malformedBlock(format: "sub", details: line)
             }
 
             let body = RegexUtils.string(line, at: 3, in: match) ?? ""
@@ -43,10 +43,10 @@ struct SUBAdapter: SubtitleFormatAdapter {
             entries.append(.cue(cue))
         }
 
-        return SubtitleDocument(format: .sub, entries: entries)
+        return SubtitleDocument(formatName: "sub", entries: entries)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
         let fps = try normalizedFPS(options.fps)
         let eol = options.lineEnding.value
         var lines: [String] = []

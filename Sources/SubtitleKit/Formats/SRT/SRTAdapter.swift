@@ -1,14 +1,14 @@
 import Foundation
 
-struct SRTAdapter: SubtitleFormatAdapter {
-    let format: SubtitleFormat = .srt
+public struct SRTFormat: SubtitleFormat {
+    public let name = "srt"
 
-    func canParse(_ content: String) -> Bool {
+    public func canParse(_ content: String) -> Bool {
         let text = TextSanitizer.stripByteOrderMark(from: content)
         return text.range(of: #"\d+\s*\n\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*-->\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
         let normalized = TextSanitizer.stripByteOrderMark(from: content)
         let blocks = StringTransforms.splitBlocks(normalized)
         var cues: [SubtitleEntry] = []
@@ -27,13 +27,13 @@ struct SRTAdapter: SubtitleFormatAdapter {
             }
 
             guard timingLineIndex < lines.count else {
-                throw SubtitleError.malformedBlock(format: .srt, details: block)
+                throw SubtitleError.malformedBlock(format: "srt", details: block)
             }
 
             let timingLine = lines[timingLineIndex]
             let timingParts = timingLine.components(separatedBy: "-->")
             guard timingParts.count == 2 else {
-                throw SubtitleError.malformedBlock(format: .srt, details: timingLine)
+                throw SubtitleError.malformedBlock(format: "srt", details: timingLine)
             }
 
             let start = try TimestampCodec.parseSRT(timingParts[0])
@@ -52,10 +52,10 @@ struct SRTAdapter: SubtitleFormatAdapter {
             index += 1
         }
 
-        return SubtitleDocument(format: .srt, entries: cues)
+        return SubtitleDocument(formatName: "srt", entries: cues)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
         let eol = options.lineEnding.value
         let cues = document.entries.compactMap { entry -> SubtitleCue? in
             if case let .cue(cue) = entry {

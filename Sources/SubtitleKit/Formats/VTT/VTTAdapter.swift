@@ -1,14 +1,14 @@
 import Foundation
 
-struct VTTAdapter: SubtitleFormatAdapter {
-    let format: SubtitleFormat = .vtt
+public struct VTTFormat: SubtitleFormat {
+    public let name = "vtt"
 
-    func canParse(_ content: String) -> Bool {
+    public func canParse(_ content: String) -> Bool {
         let text = TextSanitizer.stripByteOrderMark(from: content)
         return text.range(of: #"^\s*WEBVTT"#, options: [.regularExpression]) != nil
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
         let normalized = TextSanitizer.stripByteOrderMark(from: content)
         let blocks = StringTransforms.splitBlocks(normalized)
         var entries: [SubtitleEntry] = []
@@ -36,14 +36,14 @@ struct VTTAdapter: SubtitleFormatAdapter {
                 let timingLine = lines[timingIndex]
                 let parts = timingLine.components(separatedBy: "-->")
                 guard parts.count == 2 else {
-                    throw SubtitleError.malformedBlock(format: .vtt, details: timingLine)
+                    throw SubtitleError.malformedBlock(format: "vtt", details: timingLine)
                 }
 
                 let start = try TimestampCodec.parseVTT(parts[0])
                 let rhs = parts[1].trimmingCharacters(in: .whitespaces)
                 let rhsPieces = rhs.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
                 guard let endToken = rhsPieces.first else {
-                    throw SubtitleError.malformedBlock(format: .vtt, details: timingLine)
+                    throw SubtitleError.malformedBlock(format: "vtt", details: timingLine)
                 }
                 let end = try TimestampCodec.parseVTT(String(endToken))
 
@@ -82,10 +82,10 @@ struct VTTAdapter: SubtitleFormatAdapter {
             continue
         }
 
-        return SubtitleDocument(format: .vtt, entries: entries)
+        return SubtitleDocument(formatName: "vtt", entries: entries)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
         let eol = options.lineEnding.value
         var blocks: [String] = ["WEBVTT"]
 

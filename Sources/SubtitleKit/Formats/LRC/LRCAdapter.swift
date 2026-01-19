@@ -1,14 +1,14 @@
 import Foundation
 
-struct LRCAdapter: SubtitleFormatAdapter {
-    let format: SubtitleFormat = .lrc
+public struct LRCFormat: SubtitleFormat {
+    public let name = "lrc"
 
-    func canParse(_ content: String) -> Bool {
+    public func canParse(_ content: String) -> Bool {
         let text = TextSanitizer.stripByteOrderMark(from: content)
         return text.range(of: #"\n\[\d+:\d{1,2}(?:[\.,]\d{1,3})?\].*\n"#, options: .regularExpression) != nil
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
         let normalized = TextSanitizer.stripByteOrderMark(from: content)
         let lines = StringTransforms.lines(normalized)
         var entries: [SubtitleEntry] = []
@@ -54,13 +54,13 @@ struct LRCAdapter: SubtitleFormatAdapter {
                 continue
             }
 
-            throw SubtitleError.malformedBlock(format: .lrc, details: line)
+            throw SubtitleError.malformedBlock(format: "lrc", details: line)
         }
 
-        return SubtitleDocument(format: .lrc, entries: entries)
+        return SubtitleDocument(formatName: "lrc", entries: entries)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
         let eol = options.lineEnding.value
         var lines: [String] = []
         var wroteLyrics = false
