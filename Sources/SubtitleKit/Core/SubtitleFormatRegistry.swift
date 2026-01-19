@@ -21,6 +21,7 @@ private final class SubtitleFormatRegistryStore: @unchecked Sendable {
     }
 }
 
+/// Registry of available subtitle formats used for resolution and content detection.
 public struct SubtitleFormatRegistry: Sendable {
     private let formatsByName: [String: SubtitleFormat]
     private let detectionOrder: [SubtitleFormat]
@@ -37,6 +38,7 @@ public struct SubtitleFormatRegistry: Sendable {
         self.detectionOrder = formats
     }
 
+    /// Default registry containing all built-in SubtitleKit formats.
     public static var standard: Self {
         .init(formats: [
             .vtt,
@@ -51,15 +53,18 @@ public struct SubtitleFormatRegistry: Sendable {
         ])
     }
 
+    /// Process-wide current registry used by ``Subtitle`` convenience APIs.
     public static var current: Self {
         get { SubtitleFormatRegistryStore.shared.get() }
         set { SubtitleFormatRegistryStore.shared.set(newValue) }
     }
 
+    /// All formats in detection order.
     public var supportedFormats: [SubtitleFormat] {
         detectionOrder
     }
 
+    /// Canonical format names for the currently registered formats.
     public var supportedFormatNames: [String] {
         var names: [String] = []
         for format in detectionOrder {
@@ -70,20 +75,24 @@ public struct SubtitleFormatRegistry: Sendable {
         return names.sorted()
     }
 
+    /// Adds a format to this registry value.
     public mutating func register(_ format: SubtitleFormat) {
         self = appending(format)
     }
 
+    /// Returns a copy of this registry with one additional format.
     public func appending(_ format: SubtitleFormat) -> Self {
         .init(formats: detectionOrder + [format])
     }
 
+    /// Registers a format in ``current``.
     public static func register(_ format: SubtitleFormat) {
         var value = current
         value.register(format)
         current = value
     }
 
+    /// Resets ``current`` back to ``standard``.
     public static func resetCurrent() {
         current = .standard
     }

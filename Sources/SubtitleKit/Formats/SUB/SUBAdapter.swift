@@ -1,5 +1,6 @@
 import Foundation
 
+/// MicroDVD (`.sub`) subtitle format adapter.
 public struct SUBFormat: SubtitleFormat {
     public let name = "sub"
 

@@ -1,14 +1,19 @@
 import Foundation
 
+/// Main object-first API for parsing, converting, resyncing, and saving subtitles.
 public struct Subtitle: Sendable, Hashable {
     private static var engine: SubtitleEngine {
         SubtitleEngine(registry: .current)
     }
 
+    /// Underlying unified subtitle document.
     public var document: SubtitleDocument
+    /// Line ending detected from the source text.
     public var sourceLineEnding: LineEnding
+    /// Whether the source text started with a UTF BOM.
     public var sourceHadByteOrderMark: Bool
 
+    /// Creates a subtitle value from an existing unified document.
     public init(
         document: SubtitleDocument,
         sourceLineEnding: LineEnding = .lf,
@@ -19,32 +24,39 @@ public struct Subtitle: Sendable, Hashable {
         self.sourceHadByteOrderMark = sourceHadByteOrderMark
     }
 
+    /// Canonical format name when known.
     public var formatName: String? {
         document.formatName
     }
 
+    /// Resolved format adapter for ``formatName`` when available.
     public var format: SubtitleFormat? {
         guard let formatName else { return nil }
         return Self.engine.resolveFormat(named: formatName)
     }
 
+    /// Full entry list (cues + metadata + styles).
     public var entries: [SubtitleEntry] {
         get { document.entries }
         set { document.entries = newValue }
     }
 
+    /// Cue-only projection of ``entries``.
     public var cues: [SubtitleCue] {
         document.cues
     }
 
+    /// Returns all currently registered formats in detection order.
     public static func supportedFormats() -> [SubtitleFormat] {
         engine.supportedFormats()
     }
 
+    /// Returns canonical names of all currently registered formats.
     public static func supportedFormatNames() -> [String] {
         SubtitleFormatRegistry.current.supportedFormatNames
     }
 
+    /// Detects format from extension hints first, then by content sniffing.
     public static func detectFormat(
         in content: String,
         fileName: String? = nil,
@@ -53,6 +65,7 @@ public struct Subtitle: Sendable, Hashable {
         engine.detectFormat(content: content, fileName: fileName, fileExtension: fileExtension)
     }
 
+    /// Parses raw subtitle text into a ``Subtitle`` value.
     public static func parse(
         _ content: String,
         options: SubtitleParseOptions = .init()
@@ -66,6 +79,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    /// Convenience parse overload with direct format/detection parameters.
     public static func parse(
         _ content: String,
         format: SubtitleFormat? = nil,
@@ -86,6 +100,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    /// Loads and parses subtitle content from disk.
     public static func load(
         from fileURL: URL,
         options: SubtitleParseOptions = .init(),
@@ -103,6 +118,7 @@ public struct Subtitle: Sendable, Hashable {
         return try parse(content, options: parseOptions)
     }
 
+    /// Convenience load overload with direct format options.
     public static func load(
         from fileURL: URL,
         format: SubtitleFormat? = nil,
@@ -123,6 +139,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    /// One-shot convert API from source text to target format text.
     public static func convert(
         _ content: String,
         from sourceFormat: SubtitleFormat? = nil,
@@ -158,6 +175,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    /// Serializes this subtitle value to text.
     public func text(
         format: SubtitleFormat? = nil,
         lineEnding: LineEnding? = nil,
@@ -188,6 +206,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    /// Converts this subtitle value to another format and returns a parsed object.
     public func convert(
         to format: SubtitleFormat,
         lineEnding: LineEnding? = nil,
@@ -217,6 +236,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    /// Converts this subtitle value to another format and returns serialized text.
     public func convertedText(
         to format: SubtitleFormat,
         lineEnding: LineEnding? = nil,
@@ -237,6 +257,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    /// Returns a new subtitle with timing resync applied.
     public func resync(
         _ options: SubtitleResyncOptions
     ) -> Subtitle {
@@ -245,6 +266,7 @@ public struct Subtitle: Sendable, Hashable {
         return next
     }
 
+    /// Returns a new subtitle with timing transformed by a custom closure.
     public func resync(
         using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (Int, Int, SubtitleCue.FrameRange?)
     ) -> Subtitle {
@@ -253,18 +275,21 @@ public struct Subtitle: Sendable, Hashable {
         return next
     }
 
+    /// Mutates this subtitle by applying timing resync options.
     public mutating func applyResync(
         _ options: SubtitleResyncOptions
     ) {
         document = Self.engine.resyncDocument(document, options: options)
     }
 
+    /// Mutates this subtitle by applying a custom timing transform.
     public mutating func applyResync(
         using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (Int, Int, SubtitleCue.FrameRange?)
     ) {
         document = Self.engine.resyncDocument(document, using: transform)
     }
 
+    /// Serializes and writes this subtitle to disk.
     public func save(
         to fileURL: URL,
         format: SubtitleFormat? = nil,

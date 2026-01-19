@@ -1,5 +1,6 @@
 import Foundation
 
+/// SSA (`.ssa`) subtitle format adapter.
 public struct SSAFormat: SubtitleFormat {
     public let name = "ssa"
 
