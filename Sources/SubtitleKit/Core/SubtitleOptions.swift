@@ -30,38 +30,57 @@ public struct SubtitleParseOptions: Sendable {
 
 /// Serialization options for writing subtitle output.
 public struct SubtitleSerializeOptions: Sendable {
+    /// SAMI-specific serialization options.
+    public struct SAMIOptions: Sendable, Hashable {
+        /// Optional `<TITLE>` for SAMI output.
+        public var title: String?
+        /// SAMI language display name.
+        public var languageName: String
+        /// SAMI language code.
+        public var languageCode: String
+        /// Controls whether SAMI tags are explicitly closed.
+        public var closeTags: Bool
+
+        public init(
+            title: String? = nil,
+            languageName: String = "English",
+            languageCode: String = "en-US",
+            closeTags: Bool = false
+        ) {
+            self.title = title
+            self.languageName = languageName
+            self.languageCode = languageCode
+            self.closeTags = closeTags
+        }
+    }
+
     /// Target subtitle format.
     public var format: SubtitleFormat
     /// Line ending for the generated text.
     public var lineEnding: LineEnding
     /// Frame rate used by frame-based formats such as MicroDVD (`.sub`).
     public var fps: Double?
-    /// Optional `<TITLE>` for SAMI output.
-    public var samiTitle: String?
-    /// SAMI language display name.
-    public var samiLanguageName: String
-    /// SAMI language code.
-    public var samiLanguageCode: String
-    /// Controls whether SAMI tags are explicitly closed.
-    public var closeSMITags: Bool
+    /// SAMI-specific options. Only used when the target format is `.smi`.
+    public var sami: SAMIOptions
 
     public init(
         format: SubtitleFormat,
         lineEnding: LineEnding = .crlf,
         fps: Double? = nil,
-        samiTitle: String? = nil,
-        samiLanguageName: String = "English",
-        samiLanguageCode: String = "en-US",
-        closeSMITags: Bool = false
+        sami: SAMIOptions = .init()
     ) {
         self.format = format
         self.lineEnding = lineEnding
         self.fps = fps
-        self.samiTitle = samiTitle
-        self.samiLanguageName = samiLanguageName
-        self.samiLanguageCode = samiLanguageCode
-        self.closeSMITags = closeSMITags
+        self.sami = sami
     }
+
+    // MARK: - Internal convenience accessors (used by SMIAdapter)
+
+    var samiTitle: String? { sami.title }
+    var samiLanguageName: String { sami.languageName }
+    var samiLanguageCode: String { sami.languageCode }
+    var closeSMITags: Bool { sami.closeTags }
 }
 
 /// Timing-shift options for resynchronizing subtitle cues.

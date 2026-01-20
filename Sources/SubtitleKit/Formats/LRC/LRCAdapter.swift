@@ -5,12 +5,11 @@ public struct LRCFormat: SubtitleFormat {
     public let name = "lrc"
 
     public func canParse(_ content: String) -> Bool {
-        let text = TextSanitizer.stripByteOrderMark(from: content)
-        return text.range(of: #"\n\[\d+:\d{1,2}(?:[\.,]\d{1,3})?\].*\n"#, options: .regularExpression) != nil
+        content.range(of: #"(?:^|\n)\[\d+:\d{1,2}(?:[\.,]\d{1,3})?\]"#, options: .regularExpression) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
-        let normalized = TextSanitizer.stripByteOrderMark(from: content)
+        let normalized = content
         let lines = StringTransforms.lines(normalized)
         var entries: [SubtitleEntry] = []
         var previousCueIndex: Int?

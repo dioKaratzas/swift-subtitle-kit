@@ -2,7 +2,7 @@ import Foundation
 
 enum SSACommon {
     static func parse(_ content: String, hintedFormatName: String) throws -> SubtitleDocument {
-        let normalized = TextSanitizer.stripByteOrderMark(from: content)
+        let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
 
         var entries: [SubtitleEntry] = []

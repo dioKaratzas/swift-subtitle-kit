@@ -50,4 +50,12 @@ struct SRTVTTSBVTests {
         let rebuilt = try subtitle.text(format: .sbv, lineEnding: .lf)
         #expect(rebuilt.contains("00:00:00.000,00:00:02.000"))
     }
+
+    @Test("VTT serializes metadata with configured line ending")
+    func vttMetadataLineEnding() throws {
+        let vtt = "WEBVTT\n\nNOTE\nSome comment\n\n00:00.000 --> 00:01.000\nHello\n"
+        let subtitle = try Subtitle.parse(vtt, options: .init(format: .vtt))
+        let output = try subtitle.text(format: .vtt, lineEnding: .crlf)
+        #expect(!output.contains("\nNOTE\n")) // Should use \r\n, not bare \n inside blocks
+    }
 }

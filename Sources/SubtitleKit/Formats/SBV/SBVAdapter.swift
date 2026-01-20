@@ -5,12 +5,11 @@ public struct SBVFormat: SubtitleFormat {
     public let name = "sbv"
 
     public func canParse(_ content: String) -> Bool {
-        let text = TextSanitizer.stripByteOrderMark(from: content)
-        return text.range(of: #"\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*[,;]\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
+        content.range(of: #"\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*[,;]\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
-        let normalized = TextSanitizer.stripByteOrderMark(from: content)
+        let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
         var entries: [SubtitleEntry] = []
 

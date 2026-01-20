@@ -1,213 +1,365 @@
 # SubtitleKit
 
-`SubtitleKit` is a Swift 6 package for parsing, normalizing, converting, resyncing, and saving subtitle files.
+A Swift 6 library for parsing, converting, resyncing, and saving subtitle files.
 
-It ports the `subsrt-ts` behavior into a production-oriented Swift API centered on a single `Subtitle` value.
+SubtitleKit normalizes every supported format into a single `SubtitleDocument` model, letting you parse once and convert to any output format from the same object.
 
 ## Highlights
 
-- Object-first API: parse into `Subtitle`, then convert/resync/save from the same object
-- Multi-format support with a unified `SubtitleDocument` model
-- Auto-detection by file extension, filename, and content sniffing
-- Round-trip focused parsing/serialization for timing/order/text fidelity
-- Extensible format system via `SubtitleFormat` protocol + registry
-- `Sendable` domain model types for strict-concurrency codebases
+- **Object-first API** -- parse into a `Subtitle` value, then convert, resync, inspect, or save from that same value.
+- **9 built-in formats** with a unified timing/text model (`SubtitleDocument`).
+- **Auto-detection** by file extension, filename, and content sniffing.
+- **Round-trip fidelity** -- metadata, styles, and cue attributes survive parse/serialize cycles within the same format.
+- **Extensible** -- add new formats by conforming to `SubtitleFormat` and registering at runtime.
+- **Concurrency-ready** -- all model types are value types and `Sendable`. The global registry is thread-safe.
+- **Zero dependencies** -- only Foundation.
 
 ## Supported Formats
 
-| Format | Extensions | Parse | Serialize | Detect |
-| --- | --- | --- | --- | --- |
-| SubRip | `.srt` | Yes | Yes | Yes |
-| WebVTT | `.vtt` | Yes | Yes | Yes |
-| SubViewer | `.sbv` | Yes | Yes | Yes |
-| MicroDVD | `.sub` | Yes | Yes | Yes |
-| SSA | `.ssa` | Yes | Yes | Yes |
-| ASS | `.ass` | Yes | Yes | Yes |
-| LRC | `.lrc` | Yes | Yes | Yes |
-| SAMI | `.smi` | Yes | Yes | Yes |
-| JSON compatibility format | `.json` | Yes | Yes | Yes |
-| Custom (user-defined) | any | Yes | Yes | Yes |
+| Format | Extension | Type | Notes |
+| --- | --- | --- | --- |
+| SubRip | `.srt` | Time-based | Most widely used subtitle format |
+| WebVTT | `.vtt` | Time-based | W3C web standard; supports cue IDs, settings, and metadata blocks |
+| SubViewer | `.sbv` | Time-based | YouTube caption format |
+| MicroDVD | `.sub` | Frame-based | Requires a frame rate (`fps`) to convert to/from time-based formats |
+| Sub Station Alpha | `.ssa` | Time-based | SSA v4; preserves styles and script info metadata |
+| Advanced SSA | `.ass` | Time-based | ASS v4+; superset of SSA with richer styling |
+| LRC | `.lrc` | Time-based | Synchronized lyrics; end times are inferred from the next cue |
+| SAMI | `.smi` | Time-based | Microsoft format; HTML-based cue content |
+| JSON | `.json` | Time-based | Generic array-of-objects interchange format |
+| Custom | any | any | User-defined via `SubtitleFormat` protocol |
 
 ## Installation
 
+Add SubtitleKit to your `Package.swift`:
+
 ```swift
-// Package.swift
-.package(url: "https://github.com/your-org/subtitlekit.git", from: "1.0.0")
+dependencies: [
+    .package(url: "https://github.com/<owner>/swift-subtitle-kit", from: "1.0.0")
+]
 ```
 
-Then add `SubtitleKit` to your target dependencies.
+Then add `"SubtitleKit"` to your target's `dependencies` array.
+
+**Requirements:** Swift 6.2+, any Apple platform or Linux.
 
 ## Quick Start
 
-### Parse with auto-detection
+### Parse with Auto-Detection
 
 ```swift
 import SubtitleKit
 
-let subtitle = try Subtitle.parse(rawText)
+let subtitle = try Subtitle.parse(rawSRTText)
+print(subtitle.formatName)   // "srt"
+print(subtitle.cues.count)   // number of timed cues
 ```
 
-### Parse with explicit format
+### Parse with Explicit Format
 
 ```swift
-let subtitle = try Subtitle.parse(rawText, format: .srt)
+let subtitle = try Subtitle.parse(rawText, format: .vtt)
 ```
 
-### Load from file
+### Parse with Detection Hints
 
 ```swift
-let subtitle = try Subtitle.load(from: inputURL)
+let subtitle = try Subtitle.parse(rawText, fileName: "episode.srt")
+// or
+let subtitle = try Subtitle.parse(rawText, fileExtension: "vtt")
 ```
 
-### Convert formats
+### Load from File
 
 ```swift
-let asVTTText = try subtitle.convertedText(to: .vtt, lineEnding: .lf)
-let asVTT = try subtitle.convert(to: .vtt, lineEnding: .lf)
+let subtitle = try Subtitle.load(from: fileURL)
+// Extension of the URL is used for format detection
 ```
 
-### Resync timestamps
+## Accessing Cue Data
 
 ```swift
-let shifted = subtitle.resync(.init(offset: 1_500))
+let subtitle = try Subtitle.parse(content, format: .srt)
 
-let transformed = subtitle.resync { start, end, frame in
-    (start + 100, end + 350, frame)
+for cue in subtitle.cues {
+    print("[\(cue.startTime)ms - \(cue.endTime)ms] \(cue.plainText)")
+}
+
+// SubtitleEntry includes cues, metadata, and styles
+for entry in subtitle.entries {
+    switch entry {
+    case .cue(let cue):       print(cue.plainText)
+    case .metadata(let meta): print("\(meta.key)")
+    case .style(let style):   print(style.name)
+    }
 }
 ```
 
-### Save to file
+**`SubtitleCue` fields:**
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `id` | `Int` | Cue sequence number |
+| `cueIdentifier` | `String?` | Optional format-specific ID (e.g., WebVTT cue IDs) |
+| `startTime` | `Int` | Start time in milliseconds |
+| `endTime` | `Int` | End time in milliseconds |
+| `duration` | `Int` | Computed: `endTime - startTime` |
+| `rawText` | `String` | Original cue text (may contain formatting tags) |
+| `plainText` | `String` | Tag-stripped and normalized cue text |
+| `frameRange` | `FrameRange?` | Frame numbers for frame-based formats (MicroDVD) |
+| `attributes` | `[SubtitleAttribute]` | Format-specific key/value attributes |
+
+## Converting Formats
+
+### Get Converted Text
 
 ```swift
-try subtitle.save(to: outputURL)             // infers from file extension when possible
-try subtitle.save(to: outputURL, format: .srt)
+let vttText = try subtitle.text(format: .vtt, lineEnding: .lf)
 ```
 
-## API Surface
+### Get a Re-Parsed Subtitle Object
 
-Main types:
+```swift
+let vttSubtitle = try subtitle.convert(to: .vtt, lineEnding: .lf)
+print(vttSubtitle.formatName) // "vtt"
+```
 
-- `Subtitle`
-- `SubtitleDocument`
-- `SubtitleEntry`
-- `SubtitleCue`
-- `SubtitleMetadata`
-- `SubtitleStyle`
-- `SubtitleAttribute`
-- `SubtitleFormat` (protocol)
-- `SubtitleFormatRegistry`
-- `SubtitleParseOptions`
-- `SubtitleSerializeOptions`
-- `SubtitleResyncOptions`
-- `LineEnding`
-- `SubtitleError`
+### One-Shot Static Conversion
 
-Useful static helpers:
+```swift
+let output = try Subtitle.convert(
+    rawSRTText,
+    from: .srt,
+    to: .vtt,
+    lineEnding: .lf
+)
+```
 
-- `Subtitle.supportedFormats()`
-- `Subtitle.supportedFormatNames()`
-- `Subtitle.detectFormat(in:fileName:fileExtension:)`
-- `SubtitleFormatRegistry.register(_:)`
-- `SubtitleFormatRegistry.resetCurrent()`
+### Serialize Back to Source Format
 
-## Detection Rules
+```swift
+let text = try subtitle.text()  // uses source format and line ending
+```
 
-Detection order is:
+## Resyncing Timestamps
 
-1. Explicit format in options (if provided)
-2. File extension argument (if provided)
-3. Filename extension (if provided)
-4. Content sniffing via registered format detectors
+### Offset Shift
+
+```swift
+// Shift all cues forward by 2 seconds
+let shifted = subtitle.resync(.init(offset: 2_000))
+```
+
+### Ratio Scaling
+
+```swift
+// Speed up by 5%
+let faster = subtitle.resync(.init(ratio: 1.05))
+```
+
+### Combined
+
+```swift
+let adjusted = subtitle.resync(.init(offset: 500, ratio: 0.98))
+```
+
+### Custom Transform
+
+```swift
+let custom = subtitle.resync { start, end, frame in
+    (start + 100, end + 300, frame)
+}
+```
+
+### Mutating Variant
+
+```swift
+var mutable = subtitle
+mutable.applyResync(.init(offset: -500))
+```
+
+## Saving to File
+
+```swift
+// Infer format from the destination file extension
+try subtitle.save(to: outputURL)
+
+// Explicit format and line ending
+try subtitle.save(to: outputURL, format: .srt, lineEnding: .crlf)
+```
+
+## Format Detection
+
+Detection follows a strict priority order:
+
+1. **Explicit format** in `SubtitleParseOptions.format`
+2. **File extension** argument (`fileExtension:`)
+3. **Filename** extension extracted from `fileName:`
+4. **Content sniffing** via registered `canParse` checks
+
+Content sniffing order: VTT, LRC, SMI, ASS, SSA, SUB, SRT, SBV, JSON.
+
+```swift
+// Detect without parsing
+let format = Subtitle.detectFormat(in: rawText)
+let format = Subtitle.detectFormat(in: rawText, fileName: "track.srt")
+```
 
 ## Custom Format Extension
 
-Create a concrete formatter that conforms to `SubtitleFormat`, then register it:
+### 1. Conform to `SubtitleFormat`
 
 ```swift
 import SubtitleKit
 
-public struct LineFormat: SubtitleFormat {
-    public let name = "line"
-    public let aliases = ["line", "lines"]
+struct PipeFormat: SubtitleFormat {
+    let name = "pipe"
+    let aliases = ["pipe", "pip"]
 
-    public init() {}
-
-    public func canParse(_ content: String) -> Bool {
-        content.contains("|")
+    func canParse(_ content: String) -> Bool {
+        content.split(whereSeparator: \.isNewline).contains { line in
+            line.split(separator: "|", maxSplits: 2).count == 3
+        }
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
-        let entries = content
-            .split(whereSeparator: \.isNewline)
-            .enumerated()
-            .map { index, line -> SubtitleEntry in
-                let parts = line.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
-                let start = Int(parts[safe: 0] ?? "") ?? 0
-                let end = Int(parts[safe: 1] ?? "") ?? 0
-                let text = String(parts[safe: 2] ?? "")
-                return .cue(.init(id: index + 1, startTime: start, endTime: end, rawText: text, plainText: text))
+    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+        var entries: [SubtitleEntry] = []
+        for (i, line) in content.split(whereSeparator: \.isNewline).enumerated() {
+            let parts = line.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
+            guard parts.count == 3,
+                  let start = Int(parts[0]),
+                  let end = Int(parts[1])
+            else {
+                throw SubtitleError.malformedBlock(format: name, details: String(line))
             }
-
+            entries.append(.cue(.init(
+                id: i + 1, startTime: start, endTime: end,
+                rawText: String(parts[2]), plainText: String(parts[2])
+            )))
+        }
         return SubtitleDocument(formatName: name, entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
-        let body = document.cues.map { "\($0.startTime)|\($0.endTime)|\($0.rawText)" }
-        return body.joined(separator: options.lineEnding.value)
+    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+        let lines = document.cues.map { "\($0.startTime)|\($0.endTime)|\($0.rawText)" }
+        return lines.joined(separator: options.lineEnding.value)
+            + (lines.isEmpty ? "" : options.lineEnding.value)
     }
 }
-
-public extension SubtitleFormat where Self == LineFormat {
-    static var line: SubtitleFormat { LineFormat() }
-}
-
-SubtitleFormatRegistry.register(.line)
-
-let parsed = try Subtitle.parse(customText, format: .line)
-let asSRT = try parsed.convertedText(to: .srt)
 ```
 
-Notes:
+### 2. Add Static Accessor
 
-- `SubtitleFormatRegistry.current` is global state; call `SubtitleFormatRegistry.resetCurrent()` in tests.
-- Custom format implementations must be `Sendable` and thread-safe.
+```swift
+extension SubtitleFormat where Self == PipeFormat {
+    static var pipe: SubtitleFormat { PipeFormat() }
+}
+```
 
-## Error Model
+### 3. Register and Use
 
-`SubtitleError` includes:
+```swift
+SubtitleFormatRegistry.register(.pipe)
 
-- `unsupportedFormat`
-- `unableToDetectFormat`
-- `malformedBlock(format:details:)`
-- `invalidTimestamp(format:value:)`
-- `unsupportedVariant(format:details:)`
-- `invalidFrameRate`
+let parsed = try Subtitle.parse("0|1000|Hello\n", format: .pipe)
+let srt = try parsed.text(format: .srt)
+```
+
+## SAMI-Specific Options
+
+Format-specific serialization options are grouped in `SubtitleSerializeOptions`
+rather than polluting every method signature. For SAMI output:
+
+```swift
+let options = SubtitleSerializeOptions(
+    format: .smi,
+    lineEnding: .crlf,
+    sami: .init(title: "My Subtitles", languageName: "English", closeTags: true)
+)
+let smiText = try subtitle.text(using: options)
+try subtitle.save(to: outputURL, using: options)
+```
 
 ## Concurrency and Thread Safety
 
-- Core models are value types and `Sendable`.
-- Internal registry state is protected for concurrent access.
-- Parsers/serializers are stateless; they work safely across tasks when custom formats are also thread-safe.
+- **Model types** (`Subtitle`, `SubtitleDocument`, `SubtitleCue`, `SubtitleEntry`, etc.) are all value types conforming to `Sendable`. They are safe to pass across actor/task boundaries.
+- **Registry** -- `SubtitleFormatRegistry.current` is protected by an internal lock. The static `register(_:)` method is atomic.
+- **Parsers and serializers** are stateless struct methods. As long as custom format implementations are also `Sendable`, concurrent parsing across different tasks is safe.
+- In tests, call `SubtitleFormatRegistry.resetCurrent()` in a `defer` block to prevent cross-test leakage.
+
+## Error Handling
+
+All errors are typed as `SubtitleError`, which conforms to `LocalizedError`:
+
+| Case | Meaning |
+| --- | --- |
+| `unsupportedFormat(String)` | Named format not registered |
+| `unableToDetectFormat` | No format matched by hints or content |
+| `malformedBlock(format:details:)` | Structural parse error in a format block |
+| `invalidTimestamp(format:value:)` | Unparseable timestamp string |
+| `unsupportedVariant(format:details:)` | Recognized but unsupported format variant |
+| `invalidFrameRate(Double)` | Non-positive or invalid FPS value |
+
+```swift
+do {
+    let subtitle = try Subtitle.parse(brokenText)
+} catch let error as SubtitleError {
+    print(error.errorDescription ?? "Unknown subtitle error")
+}
+```
+
+## API Reference
+
+### Main Types
+
+| Type | Role |
+| --- | --- |
+| `Subtitle` | Primary entry point: parse, convert, resync, save |
+| `SubtitleDocument` | Unified document model (entries array + format name) |
+| `SubtitleEntry` | Enum: `.cue`, `.metadata`, `.style` |
+| `SubtitleCue` | Timed cue with text, timestamps, and attributes |
+| `SubtitleMetadata` | Key/value metadata from format headers |
+| `SubtitleStyle` | Named style with key/value fields |
+| `SubtitleAttribute` | Key/value pair used across cues, metadata, styles |
+
+### Configuration Types
+
+| Type | Role |
+| --- | --- |
+| `SubtitleParseOptions` | Format hints, FPS, whitespace preservation |
+| `SubtitleSerializeOptions` | Target format, line ending, FPS, SAMI-specific options |
+| `SubtitleResyncOptions` | Offset, ratio, frame-value mode |
+| `LineEnding` | `.lf` or `.crlf` |
+
+### Format System
+
+| Type | Role |
+| --- | --- |
+| `SubtitleFormat` | Protocol for format adapters |
+| `SubtitleFormatRegistry` | Registration, resolution, and detection |
+| `SRTFormat`, `VTTFormat`, ... | Built-in format implementations |
+
+## Limitations and Edge Cases
+
+- **Cross-family conversion** normalizes style/metadata to the lowest common denominator. ASS/SSA styles are best preserved when staying in the ASS/SSA family.
+- **SAMI** HTML semantics (classes, nested tags) are simplified to plain text when converting to non-SAMI formats.
+- **MicroDVD** (`.sub`) stores frame numbers; converting to/from time-based formats requires an accurate `fps` value. The default is 25 fps.
+- **LRC** has no explicit end times; SubtitleKit infers end times from the start of the next cue (final cue gets a 2-second default duration).
+- **JSON format** uses `JSONSerialization` for broad compatibility; the schema follows the subsrt-ts convention (array of objects with `type`, `start`, `end`, `content`, `text` fields).
+- **BOM handling** -- UTF-8 byte order marks are stripped during normalization. The `sourceHadByteOrderMark` property records whether one was present.
+- **Line endings** -- source line endings (LF vs CRLF) are detected and preserved by default. Override with the `lineEnding:` parameter on any serialization method.
 
 ## Testing
 
-The package uses **Swift Testing** (`import Testing`) and includes:
+The package uses **Swift Testing** (`import Testing`) with:
 
-- Fixture-based parsing tests for every built-in format
-- Round-trip serialization tests per format
+- Fixture-based parsing tests for all 9 built-in formats
+- Round-trip serialization tests
 - Cross-format conversion tests
-- Edge-case coverage (BOM, CRLF/LF, malformed timestamps, empty metadata sections)
-- Performance sanity test for large SRT payloads
-
-Run all tests:
+- Edge-case coverage (BOM, CRLF/LF, malformed timestamps, empty metadata)
+- Performance sanity test (8,000-cue SRT)
+- Custom format registration and detection tests
 
 ```bash
 swift test
 ```
-
-## Known Limitations
-
-- Converting between very different subtitle families can normalize style/metadata details.
-- ASS/SSA style/event richness is best preserved when staying in ASS/SSA.
-- SAMI HTML/class semantics are simplified when converting to non-SAMI formats.
-- MicroDVD (`.sub`) conversions without explicit `frameRange` rely on `fps` assumptions.

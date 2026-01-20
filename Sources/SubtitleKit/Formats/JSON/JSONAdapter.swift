@@ -5,14 +5,14 @@ public struct JSONFormat: SubtitleFormat {
     public let name = "json"
 
     public func canParse(_ content: String) -> Bool {
-        let trimmed = TextSanitizer.stripByteOrderMark(from: content).trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.first == "[" || trimmed.first == "{" else { return false }
         guard let data = trimmed.data(using: .utf8) else { return false }
         return (try? JSONSerialization.jsonObject(with: data)) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
-        let normalized = TextSanitizer.stripByteOrderMark(from: content)
+        let normalized = content
         guard let data = normalized.data(using: .utf8),
               let json = try JSONSerialization.jsonObject(with: data) as? [Any]
         else {
@@ -116,7 +116,7 @@ public struct JSONFormat: SubtitleFormat {
                     ]
                 }
                 if !cue.attributes.isEmpty {
-                    object["data"] = Dictionary(uniqueKeysWithValues: cue.attributes.map { ($0.key, $0.value) })
+                    object["data"] = Dictionary(cue.attributes.map { ($0.key, $0.value) }, uniquingKeysWith: { _, last in last })
                 }
                 payload.append(object)
 
@@ -129,12 +129,12 @@ public struct JSONFormat: SubtitleFormat {
                 case let .text(text):
                     object["data"] = text
                 case let .fields(fields):
-                    object["data"] = Dictionary(uniqueKeysWithValues: fields.map { ($0.key, $0.value) })
+                    object["data"] = Dictionary(fields.map { ($0.key, $0.value) }, uniquingKeysWith: { _, last in last })
                 }
                 payload.append(object)
 
             case let .style(style):
-                let data = Dictionary(uniqueKeysWithValues: style.fields.map { ($0.key, $0.value) })
+                let data = Dictionary(style.fields.map { ($0.key, $0.value) }, uniquingKeysWith: { _, last in last })
                 payload.append([
                     "type": "style",
                     "data": data,

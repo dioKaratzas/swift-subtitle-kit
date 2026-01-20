@@ -16,12 +16,28 @@ private final class SubtitleFormatRegistryStore: @unchecked Sendable {
 
     func set(_ value: SubtitleFormatRegistry) {
         lock.lock()
+        defer { lock.unlock() }
         registry = value
-        lock.unlock()
+    }
+
+    func mutate(_ body: (inout SubtitleFormatRegistry) -> Void) {
+        lock.lock()
+        defer { lock.unlock() }
+        body(&registry)
     }
 }
 
 /// Registry of available subtitle formats used for resolution and content detection.
+///
+/// The registry maps format names and aliases to their adapters, and defines
+/// the order in which content-based detection is attempted.
+///
+/// Use ``current`` to access the process-wide registry, or ``standard`` to get
+/// a fresh registry with only the built-in formats.
+///
+/// ## Thread Safety
+/// Access to ``current`` is internally synchronized. The static ``register(_:)``
+/// method is atomic. Custom formats must also be `Sendable`.
 public struct SubtitleFormatRegistry: Sendable {
     private let formatsByName: [String: SubtitleFormat]
     private let detectionOrder: [SubtitleFormat]
@@ -86,10 +102,12 @@ public struct SubtitleFormatRegistry: Sendable {
     }
 
     /// Registers a format in ``current``.
+    ///
+    /// This operation is atomic with respect to other concurrent mutations of ``current``.
     public static func register(_ format: SubtitleFormat) {
-        var value = current
-        value.register(format)
-        current = value
+        SubtitleFormatRegistryStore.shared.mutate { registry in
+            registry.register(format)
+        }
     }
 
     /// Resets ``current`` back to ``standard``.
