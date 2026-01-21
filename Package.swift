@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SubtitleKit",
+    name: "swift-subtitle-kit",
     products: [
         .library(
             name: "SubtitleKit",

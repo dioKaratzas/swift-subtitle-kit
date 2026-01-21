@@ -31,7 +31,7 @@ SubtitleKit normalizes every supported format into a single `SubtitleDocument` m
 
 ## Installation
 
-Add SubtitleKit to your `Package.swift`:
+Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
@@ -39,7 +39,16 @@ dependencies: [
 ]
 ```
 
-Then add `"SubtitleKit"` to your target's `dependencies` array.
+Then add the library product to your target dependencies:
+
+```swift
+.target(
+    name: "MyApp",
+    dependencies: [
+        .product(name: "SubtitleKit", package: "swift-subtitle-kit")
+    ]
+)
+```
 
 **Requirements:** Swift 6.2+, any Apple platform or Linux.
 
