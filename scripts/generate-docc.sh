@@ -103,12 +103,21 @@ cleanup() {
 trap cleanup EXIT
 
 echo "Preparing temporary package copy..."
-rsync -a \
-  --exclude '.git' \
-  --exclude '.build' \
-  --exclude 'docs' \
-  --exclude '.swiftpm' \
-  "$ROOT/" "$TMP_DIR/repo/"
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a \
+    --exclude '.git' \
+    --exclude '.build' \
+    --exclude 'docs' \
+    --exclude '.swiftpm' \
+    "$ROOT/" "$TMP_DIR/repo/"
+else
+  cp -R "$ROOT/." "$TMP_DIR/repo/"
+  rm -rf \
+    "$TMP_DIR/repo/.git" \
+    "$TMP_DIR/repo/.build" \
+    "$TMP_DIR/repo/docs" \
+    "$TMP_DIR/repo/.swiftpm"
+fi
 
 pushd "$TMP_DIR/repo" >/dev/null
 
