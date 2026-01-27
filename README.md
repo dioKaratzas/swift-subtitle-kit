@@ -1,8 +1,6 @@
 # SubtitleKit
 
-[![CI](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/test.yml/badge.svg)](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/test.yml)
-[![Docs](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/docs.yml/badge.svg)](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/docs.yml)
-[![Release](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/release.yml/badge.svg)](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/release.yml)
+[![Test](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/test.yml/badge.svg)](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/test.yml)
 [![Latest Release](https://img.shields.io/github/v/release/dioKaratzas/swift-subtitle-kit?display_name=tag)](https://github.com/dioKaratzas/swift-subtitle-kit/releases)
 [![Platforms](https://img.shields.io/badge/platforms-iOS%2013%2B%20%7C%20macOS%2010.15%2B%20%7C%20tvOS%2013%2B%20%7C%20watchOS%206%2B-blue)](https://github.com/dioKaratzas/swift-subtitle-kit/blob/main/Package.swift)
 [![Swift](https://img.shields.io/badge/swift-6.0-orange)](https://www.swift.org)
