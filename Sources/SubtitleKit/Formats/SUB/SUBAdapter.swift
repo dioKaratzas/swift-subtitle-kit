@@ -11,15 +11,17 @@ public struct SUBFormat: SubtitleFormat {
         return RegexUtils.firstMatch(regex, in: content) != nil
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let fps = try normalizedFPS(options.fps)
         let normalized = content
         let lines = StringTransforms.lines(normalized)
         var entries: [SubtitleEntry] = []
+        guard let cueRegex = try? NSRegularExpression(pattern: #"^\{(\d+)\}\{(\d+)\}(.*)$"#) else {
+            throw SubtitleError.internalFailure(details: "SUB cue regex setup failed")
+        }
 
         for (index, line) in lines.enumerated() {
-            guard let regex = try? NSRegularExpression(pattern: #"^\{(\d+)\}\{(\d+)\}(.*)$"#),
-                  let match = RegexUtils.firstMatch(regex, in: line),
+            guard let match = RegexUtils.firstMatch(cueRegex, in: line),
                   let startFrame = Int(RegexUtils.string(line, at: 1, in: match) ?? ""),
                   let endFrame = Int(RegexUtils.string(line, at: 2, in: match) ?? "")
             else {
@@ -46,7 +48,7 @@ public struct SUBFormat: SubtitleFormat {
         return SubtitleDocument(formatName: "sub", entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let fps = try normalizedFPS(options.fps)
         let eol = options.lineEnding.value
         var lines: [String] = []
@@ -62,7 +64,7 @@ public struct SUBFormat: SubtitleFormat {
         return lines.joined(separator: eol) + (lines.isEmpty ? "" : eol)
     }
 
-    private func normalizedFPS(_ fps: Double?) throws -> Double {
+    private func normalizedFPS(_ fps: Double?) throws(SubtitleError) -> Double {
         let value = fps ?? 25
         guard value > 0 else {
             throw SubtitleError.invalidFrameRate(value)

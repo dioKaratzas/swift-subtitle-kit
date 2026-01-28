@@ -8,11 +8,11 @@ public struct SSAFormat: SubtitleFormat {
         SSACommon.isSSAContent(content)
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         try SSACommon.parse(content, hintedFormatName: name)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         SSACommon.serialize(document, formatName: name, lineEnding: options.lineEnding)
     }
 }

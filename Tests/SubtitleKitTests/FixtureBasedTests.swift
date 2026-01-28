@@ -5,7 +5,7 @@ import Testing
 @Suite("Fixture Parsing")
 struct FixtureParsingTests {
     @Test("Parses real fixtures", arguments: FixtureSupport.fixtureFormatNames)
-    func parseFixture(for formatName: String) throws {
+    func parseFixture(for formatName: String) throws(any Error) {
         let format = FixtureSupport.format(named: formatName)
         let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
@@ -13,7 +13,7 @@ struct FixtureParsingTests {
     }
 
     @Test("Round-trips real fixtures", arguments: FixtureSupport.fixtureFormatNames)
-    func roundTripFixture(for formatName: String) throws {
+    func roundTripFixture(for formatName: String) throws(any Error) {
         let format = FixtureSupport.format(named: formatName)
         let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
@@ -26,7 +26,7 @@ struct FixtureParsingTests {
     }
 
     @Test("Converts fixture to SRT and VTT", arguments: FixtureSupport.fixtureFormatNames)
-    func convertFixture(for formatName: String) throws {
+    func convertFixture(for formatName: String) throws(any Error) {
         let format = FixtureSupport.format(named: formatName)
         let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
@@ -44,7 +44,7 @@ struct FixtureParsingTests {
 @Suite("Edge Cases")
 struct EdgeCaseTests {
     @Test("Handles BOM and CRLF")
-    func bomAndCRLF() throws {
+    func bomAndCRLF() throws(any Error) {
         let input = "\u{FEFF}1\r\n00:00:00,500 --> 00:00:02,000\r\nHello\r\n"
         let subtitle = try Subtitle.parse(input, options: .init(format: .srt))
 
@@ -65,7 +65,7 @@ struct EdgeCaseTests {
     }
 
     @Test("Handles empty metadata sections")
-    func emptyMetadataSections() throws {
+    func emptyMetadataSections() throws(any Error) {
         let vtt = "WEBVTT\n\nNOTE\n\n00:00.000 --> 00:01.000\nHello\n"
         let subtitle = try Subtitle.parse(vtt, options: .init(format: .vtt))
         #expect(subtitle.cues.count == 1)
@@ -73,7 +73,7 @@ struct EdgeCaseTests {
     }
 
     @Test("Handles metadata quirks")
-    func metadataQuirks() throws {
+    func metadataQuirks() throws(any Error) {
         let lrc = try FixtureSupport.sampleText(for: "lrc")
         let subtitle = try Subtitle.parse(lrc, options: .init(format: .lrc))
         let metaCount = subtitle.entries.filter {
@@ -87,7 +87,7 @@ struct EdgeCaseTests {
 @Suite("Performance Sanity")
 struct PerformanceSanityTests {
     @Test("Parses and serializes large SRT within sanity threshold")
-    func largeSRTPerformance() throws {
+    func largeSRTPerformance() throws(any Error) {
         let cueCount = 8_000
         let srt = FixtureSupport.generatedSRT(cueCount: cueCount)
         let clock = ContinuousClock()

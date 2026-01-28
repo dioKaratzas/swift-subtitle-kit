@@ -11,7 +11,7 @@ struct ConversionDetectionTests {
     }
 
     @Test("Normalizes BOM and reports line ending")
-    func parseTracksInputShape() throws {
+    func parseTracksInputShape() throws(any Error) {
         let input = "\u{FEFF}1\r\n00:00:00,000 --> 00:00:01,000\r\nHi"
         let subtitle = try Subtitle.parse(input, options: .init(format: .srt))
         #expect(subtitle.sourceHadByteOrderMark)
@@ -19,7 +19,7 @@ struct ConversionDetectionTests {
     }
 
     @Test("Converts SRT to VTT")
-    func convertSRTToVTT() throws {
+    func convertSRTToVTT() throws(any Error) {
         let srt = "1\n00:00:00,500 --> 00:00:02,000\nHello\n"
         let subtitle = try Subtitle.parse(srt, options: .init(format: .srt))
         let converted = try subtitle.text(format: .vtt, lineEnding: .lf)
@@ -28,7 +28,7 @@ struct ConversionDetectionTests {
     }
 
     @Test("Static one-shot convert API")
-    func staticConvertAPI() throws {
+    func staticConvertAPI() throws(any Error) {
         let srt = "1\n00:00:00,500 --> 00:00:02,000\nHello\n"
         let converted = try Subtitle.convert(
             srt,
@@ -41,7 +41,7 @@ struct ConversionDetectionTests {
     }
 
     @Test("Static one-shot convert supports full serialize options")
-    func staticConvertWithSerializeOptions() throws {
+    func staticConvertWithSerializeOptions() throws(any Error) {
         let srt = "1\n00:00:01,000 --> 00:00:02,000\nHello\n"
         let converted = try Subtitle.convert(
             srt,
@@ -57,7 +57,7 @@ struct ConversionDetectionTests {
     }
 
     @Test("Converts with resync offset")
-    func convertWithResync() throws {
+    func convertWithResync() throws(any Error) {
         let srt = "1\n00:00:00,500 --> 00:00:02,000\nHello\n"
         let subtitle = try Subtitle.parse(srt, options: .init(format: .srt))
         let converted = try subtitle
@@ -68,7 +68,7 @@ struct ConversionDetectionTests {
     }
 
     @Test("Resync by transform closure")
-    func resyncUsingTransform() throws {
+    func resyncUsingTransform() throws(any Error) {
         let subtitle = Subtitle(document: SubtitleDocument(formatName: "srt", entries: [
             .cue(.init(id: 1, startTime: 1000, endTime: 2000, rawText: "Hi", plainText: "Hi"))
         ]))
@@ -80,7 +80,7 @@ struct ConversionDetectionTests {
     }
 
     @Test("JSON serialization handles duplicate attribute keys")
-    func jsonDuplicateAttributeKeys() throws {
+    func jsonDuplicateAttributeKeys() throws(any Error) {
         let doc = SubtitleDocument(formatName: "json", entries: [
             .cue(.init(
                 id: 1, startTime: 0, endTime: 1000,

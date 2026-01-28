@@ -8,7 +8,7 @@ public struct SRTFormat: SubtitleFormat {
         content.range(of: #"\d+\s*\n\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*-->\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
         var cues: [SubtitleEntry] = []
@@ -55,7 +55,7 @@ public struct SRTFormat: SubtitleFormat {
         return SubtitleDocument(formatName: "srt", entries: cues)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
         let cues = document.entries.compactMap { entry -> SubtitleCue? in
             if case let .cue(cue) = entry {

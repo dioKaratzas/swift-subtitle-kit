@@ -8,11 +8,23 @@ public struct SMIFormat: SubtitleFormat {
         content.range(of: #"<SAMI[^>]*>[\s\S]*<BODY[^>]*>"#, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let eol = "\n"
         var entries: [SubtitleEntry] = []
         var entryID = 1
+        guard let syncRegex = try? NSRegularExpression(
+            pattern: #"^<SYNC[^>]+Start\s*=\s*[\"']?(\d+)[^\d>]*>([\s\S]*)"#,
+            options: [.caseInsensitive]
+        ) else {
+            throw SubtitleError.internalFailure(details: "SMI SYNC regex setup failed")
+        }
+        guard let pRegex = try? NSRegularExpression(
+            pattern: #"^<P[^>]*>([\s\S]*)"#,
+            options: [.caseInsensitive]
+        ) else {
+            throw SubtitleError.internalFailure(details: "SMI paragraph regex setup failed")
+        }
 
         if let title = firstCapture(#"<TITLE[^>]*>([\s\S]*?)</TITLE>"#, in: normalized, options: [.caseInsensitive]) {
             let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -34,8 +46,7 @@ public struct SMIFormat: SubtitleFormat {
 
         for rawPart in syncParts where !rawPart.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let part = "<SYNC" + rawPart
-            guard let regex = try? NSRegularExpression(pattern: #"^<SYNC[^>]+Start\s*=\s*[\"']?(\d+)[^\d>]*>([\s\S]*)"#, options: [.caseInsensitive]),
-                  let match = RegexUtils.firstMatch(regex, in: part),
+            guard let match = RegexUtils.firstMatch(syncRegex, in: part),
                   let startValue = RegexUtils.string(part, at: 1, in: match),
                   let start = Int(startValue)
             else {
@@ -54,10 +65,9 @@ public struct SMIFormat: SubtitleFormat {
                 .replacingOccurrences(of: #"^</SYNC[^>]*>"#, with: "", options: [.regularExpression, .caseInsensitive])
             cue.rawText = contentValue
 
-            let pRegex = try? NSRegularExpression(pattern: #"^<P[^>]*>([\s\S]*)"#, options: [.caseInsensitive])
             var blankCaption = true
             let pSource = contentValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let pRegex, let pMatch = RegexUtils.firstMatch(pRegex, in: pSource) {
+            if let pMatch = RegexUtils.firstMatch(pRegex, in: pSource) {
                 var html = RegexUtils.string(pSource, at: 1, in: pMatch) ?? ""
                 html = html.replacingOccurrences(of: #"<P[\s\S]+$"#, with: "", options: [.regularExpression, .caseInsensitive])
                 html = html.replacingOccurrences(of: #"<BR\s*/?>\s+"#, with: eol, options: [.regularExpression, .caseInsensitive])
@@ -86,7 +96,7 @@ public struct SMIFormat: SubtitleFormat {
         return SubtitleDocument(formatName: "smi", entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
         var output: [String] = []
 

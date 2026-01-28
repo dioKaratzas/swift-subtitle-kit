@@ -8,15 +8,18 @@ public struct LRCFormat: SubtitleFormat {
         content.range(of: #"(?:^|\n)\[\d+:\d{1,2}(?:[\.,]\d{1,3})?\]"#, options: .regularExpression) != nil
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let lines = StringTransforms.lines(normalized)
         var entries: [SubtitleEntry] = []
         var previousCueIndex: Int?
         var entryID = 1
 
-        let lyricRegex = try NSRegularExpression(pattern: #"^\[(\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?)\](.*)$"#)
-        let metaRegex = try NSRegularExpression(pattern: #"^\[(\w+):([^\]]*)\]$"#)
+        guard let lyricRegex = try? NSRegularExpression(pattern: #"^\[(\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?)\](.*)$"#),
+              let metaRegex = try? NSRegularExpression(pattern: #"^\[(\w+):([^\]]*)\]$"#)
+        else {
+            throw SubtitleError.internalFailure(details: "LRC regex setup failed")
+        }
 
         for line in lines {
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -60,7 +63,7 @@ public struct LRCFormat: SubtitleFormat {
         return SubtitleDocument(formatName: "lrc", entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
         var lines: [String] = []
         var wroteLyrics = false

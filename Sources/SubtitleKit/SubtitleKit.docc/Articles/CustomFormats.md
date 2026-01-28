@@ -24,7 +24,7 @@ public struct LineFormat: SubtitleFormat {
         }
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         var entries: [SubtitleEntry] = []
 
         for (index, line) in content.split(whereSeparator: \.isNewline).enumerated() {
@@ -49,7 +49,7 @@ public struct LineFormat: SubtitleFormat {
         return SubtitleDocument(formatName: name, entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let body = document.cues.map { "\($0.startTime)|\($0.endTime)|\($0.rawText)" }
         return body.joined(separator: options.lineEnding.value)
             + (body.isEmpty ? "" : options.lineEnding.value)

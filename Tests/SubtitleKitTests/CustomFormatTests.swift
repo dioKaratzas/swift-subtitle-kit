@@ -14,7 +14,7 @@ private struct LineFormat: SubtitleFormat {
             }
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let lines = content.split(whereSeparator: \.isNewline)
         var entries: [SubtitleEntry] = []
 
@@ -40,7 +40,7 @@ private struct LineFormat: SubtitleFormat {
         return SubtitleDocument(formatName: name, entries: entries)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let body = document.cues.map { cue in
             "\(cue.startTime)|\(cue.endTime)|\(cue.rawText)"
         }
@@ -55,7 +55,7 @@ extension SubtitleFormat where Self == LineFormat {
 @Suite("Custom format registry")
 struct CustomFormatTests {
     @Test("Uses current registry with custom format")
-    func customRegistryFlow() throws {
+    func customRegistryFlow() throws(any Error) {
         SubtitleFormatRegistry.resetCurrent()
         defer { SubtitleFormatRegistry.resetCurrent() }
 

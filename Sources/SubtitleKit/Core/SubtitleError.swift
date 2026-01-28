@@ -18,6 +18,12 @@ public enum SubtitleError: Error, Sendable, Hashable, LocalizedError {
     case unsupportedVariant(format: String, details: String)
     /// The provided frame rate is non-positive or otherwise invalid.
     case invalidFrameRate(Double)
+    /// Reading input subtitle text from disk failed.
+    case fileReadFailed(path: String, details: String)
+    /// Writing output subtitle text to disk failed.
+    case fileWriteFailed(path: String, details: String)
+    /// Internal parser/serializer setup failed before processing input.
+    case internalFailure(details: String)
 
     public var errorDescription: String? {
         switch self {
@@ -33,6 +39,12 @@ public enum SubtitleError: Error, Sendable, Hashable, LocalizedError {
             return "Unsupported \(format.uppercased()) variant: \(details)"
         case let .invalidFrameRate(value):
             return "Invalid frame rate: \(value)"
+        case let .fileReadFailed(path, details):
+            return "Failed to read subtitle file at \(path): \(details)"
+        case let .fileWriteFailed(path, details):
+            return "Failed to write subtitle file at \(path): \(details)"
+        case let .internalFailure(details):
+            return "SubtitleKit internal failure: \(details)"
         }
     }
 }

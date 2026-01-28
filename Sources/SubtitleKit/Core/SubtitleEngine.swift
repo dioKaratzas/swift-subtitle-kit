@@ -31,7 +31,7 @@ struct SubtitleEngine: Sendable {
         return registry.detectFormat(content: sanitized)
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions = .init()) throws -> SubtitleDocument {
+    func parse(_ content: String, options: SubtitleParseOptions = .init()) throws(SubtitleError) -> SubtitleDocument {
         let resolvedFormat = options.format
             ?? options.fileExtension.flatMap(registry.resolve(fileExtension:))
             ?? options.fileName.flatMap(registry.resolve(fileName:))
@@ -52,7 +52,7 @@ struct SubtitleEngine: Sendable {
         return parsed
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         try options.format.serialize(document, options: options)
     }
 

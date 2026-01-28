@@ -240,7 +240,7 @@ struct PipeFormat: SubtitleFormat {
         }
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         var entries: [SubtitleEntry] = []
         for (i, line) in content.split(whereSeparator: \.isNewline).enumerated() {
             let parts = line.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
@@ -258,7 +258,7 @@ struct PipeFormat: SubtitleFormat {
         return SubtitleDocument(formatName: name, entries: entries)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let lines = document.cues.map { "\($0.startTime)|\($0.endTime)|\($0.rawText)" }
         return lines.joined(separator: options.lineEnding.value)
             + (lines.isEmpty ? "" : options.lineEnding.value)

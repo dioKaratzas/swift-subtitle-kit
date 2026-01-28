@@ -1,7 +1,7 @@
 import Foundation
 
 enum SSACommon {
-    static func parse(_ content: String, hintedFormatName: String) throws -> SubtitleDocument {
+    static func parse(_ content: String, hintedFormatName: String) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
 

@@ -11,11 +11,18 @@ public struct JSONFormat: SubtitleFormat {
         return (try? JSONSerialization.jsonObject(with: data)) != nil
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
-        guard let data = normalized.data(using: .utf8),
-              let json = try JSONSerialization.jsonObject(with: data) as? [Any]
-        else {
+        guard let data = normalized.data(using: .utf8) else {
+            throw SubtitleError.malformedBlock(format: "json", details: "Expected top-level JSON array")
+        }
+        let jsonObject: Any
+        do {
+            jsonObject = try JSONSerialization.jsonObject(with: data)
+        } catch {
+            throw SubtitleError.malformedBlock(format: "json", details: "Invalid JSON input: \(error.localizedDescription)")
+        }
+        guard let json = jsonObject as? [Any] else {
             throw SubtitleError.malformedBlock(format: "json", details: "Expected top-level JSON array")
         }
 
@@ -89,7 +96,7 @@ public struct JSONFormat: SubtitleFormat {
         return SubtitleDocument(formatName: "json", entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         var payload: [[String: Any]] = []
 
         for entry in document.entries {
@@ -142,7 +149,12 @@ public struct JSONFormat: SubtitleFormat {
             }
         }
 
-        let data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
+        let data: Data
+        do {
+            data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
+        } catch {
+            throw SubtitleError.malformedBlock(format: "json", details: "Unable to encode JSON output: \(error.localizedDescription)")
+        }
         guard var output = String(data: data, encoding: .utf8) else {
             throw SubtitleError.malformedBlock(format: "json", details: "Unable to encode JSON output")
         }

@@ -8,7 +8,7 @@ public struct SBVFormat: SubtitleFormat {
         content.range(of: #"\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*[,;]\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
         var entries: [SubtitleEntry] = []
@@ -42,7 +42,7 @@ public struct SBVFormat: SubtitleFormat {
         return SubtitleDocument(formatName: "sbv", entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
         var blocks: [String] = []
 

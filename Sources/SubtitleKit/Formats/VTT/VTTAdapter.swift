@@ -8,12 +8,17 @@ public struct VTTFormat: SubtitleFormat {
         content.range(of: #"^\s*WEBVTT"#, options: [.regularExpression]) != nil
     }
 
-    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
         var entries: [SubtitleEntry] = []
         var cueIndex = 1
         var entryIndex = 1
+        guard let timingRegex = try? NSRegularExpression(
+            pattern: #"^\s*(?:\d{1,2}:)?\d{1,2}:\d{1,2}(?:[.,]\d{1,3})?\s*-->\s*(?:\d{1,2}:)?\d{1,2}:\d{1,2}(?:[.,]\d{1,3})?.*$"#
+        ) else {
+            throw SubtitleError.internalFailure(details: "VTT timing regex setup failed")
+        }
 
         for block in blocks {
             let lines = StringTransforms.lines(block)
@@ -25,9 +30,6 @@ public struct VTTFormat: SubtitleFormat {
                 continue
             }
 
-            let timingRegex = try NSRegularExpression(
-                pattern: #"^\s*(?:\d{1,2}:)?\d{1,2}:\d{1,2}(?:[.,]\d{1,3})?\s*-->\s*(?:\d{1,2}:)?\d{1,2}:\d{1,2}(?:[.,]\d{1,3})?.*$"#
-            )
             let timingIndex = lines.firstIndex { line in
                 RegexUtils.firstMatch(timingRegex, in: line) != nil
             }
@@ -85,7 +87,7 @@ public struct VTTFormat: SubtitleFormat {
         return SubtitleDocument(formatName: "vtt", entries: entries)
     }
 
-    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
         var blocks: [String] = ["WEBVTT"]
 

@@ -73,7 +73,7 @@ public struct Subtitle: Sendable, Hashable {
     public static func parse(
         _ content: String,
         options: SubtitleParseOptions = .init()
-    ) throws -> Subtitle {
+    ) throws(SubtitleError) -> Subtitle {
         let normalized = SubtitleNormalizer.normalizeInput(content)
         let document = try engine.parse(normalized.text, options: options)
         return Subtitle(
@@ -91,7 +91,7 @@ public struct Subtitle: Sendable, Hashable {
         fileExtension: String? = nil,
         preserveWhitespaceCaptions: Bool = false,
         fps: Double? = nil
-    ) throws -> Subtitle {
+    ) throws(SubtitleError) -> Subtitle {
         try parse(
             content,
             options: SubtitleParseOptions(
@@ -111,7 +111,7 @@ public struct Subtitle: Sendable, Hashable {
         from fileURL: URL,
         options: SubtitleParseOptions = .init(),
         encoding: String.Encoding = .utf8
-    ) throws -> Subtitle {
+    ) throws(SubtitleError) -> Subtitle {
         var parseOptions = options
         if parseOptions.fileName == nil {
             parseOptions.fileName = fileURL.lastPathComponent
@@ -120,7 +120,12 @@ public struct Subtitle: Sendable, Hashable {
             parseOptions.fileExtension = fileURL.pathExtension
         }
 
-        let content = try String(contentsOf: fileURL, encoding: encoding)
+        let content: String
+        do {
+            content = try String(contentsOf: fileURL, encoding: encoding)
+        } catch {
+            throw SubtitleError.fileReadFailed(path: fileURL.path, details: error.localizedDescription)
+        }
         return try parse(content, options: parseOptions)
     }
 
@@ -131,7 +136,7 @@ public struct Subtitle: Sendable, Hashable {
         preserveWhitespaceCaptions: Bool = false,
         fps: Double? = nil,
         encoding: String.Encoding = .utf8
-    ) throws -> Subtitle {
+    ) throws(SubtitleError) -> Subtitle {
         try load(
             from: fileURL,
             options: SubtitleParseOptions(
@@ -156,7 +161,7 @@ public struct Subtitle: Sendable, Hashable {
         fps: Double? = nil,
         preserveWhitespaceCaptions: Bool = false,
         resync: SubtitleResyncOptions? = nil
-    ) throws -> String {
+    ) throws(SubtitleError) -> String {
         try convert(
             content,
             from: sourceFormat,
@@ -180,7 +185,7 @@ public struct Subtitle: Sendable, Hashable {
         using options: SubtitleSerializeOptions,
         preserveWhitespaceCaptions: Bool = false,
         resync: SubtitleResyncOptions? = nil
-    ) throws -> String {
+    ) throws(SubtitleError) -> String {
         var subtitle = try parse(
             content,
             options: SubtitleParseOptions(
@@ -201,7 +206,7 @@ public struct Subtitle: Sendable, Hashable {
     ///
     /// This is the primary serialization entry point. All format-specific
     /// options (such as SAMI settings) live in ``SubtitleSerializeOptions``.
-    public func text(using options: SubtitleSerializeOptions) throws -> String {
+    public func text(using options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         try Self.engine.serialize(document, options: options)
     }
 
@@ -216,7 +221,7 @@ public struct Subtitle: Sendable, Hashable {
         format: SubtitleFormat? = nil,
         lineEnding: LineEnding? = nil,
         fps: Double? = nil
-    ) throws -> String {
+    ) throws(SubtitleError) -> String {
         let resolvedFormat = format
             ?? (formatName.flatMap { Self.engine.resolveFormat(named: $0) })
 
@@ -236,7 +241,7 @@ public struct Subtitle: Sendable, Hashable {
         to format: SubtitleFormat,
         lineEnding: LineEnding? = nil,
         fps: Double? = nil
-    ) throws -> Subtitle {
+    ) throws(SubtitleError) -> Subtitle {
         let convertedText = try text(
             format: format,
             lineEnding: lineEnding,
@@ -299,7 +304,7 @@ public struct Subtitle: Sendable, Hashable {
         lineEnding: LineEnding? = nil,
         fps: Double? = nil,
         encoding: String.Encoding = .utf8
-    ) throws {
+    ) throws(SubtitleError) {
         let extensionGuess = fileURL.pathExtension.isEmpty
             ? nil
             : Self.engine.detectFormat(content: "", fileExtension: fileURL.pathExtension)
@@ -310,7 +315,11 @@ public struct Subtitle: Sendable, Hashable {
             fps: fps
         )
 
-        try output.write(to: fileURL, atomically: true, encoding: encoding)
+        do {
+            try output.write(to: fileURL, atomically: true, encoding: encoding)
+        } catch {
+            throw SubtitleError.fileWriteFailed(path: fileURL.path, details: error.localizedDescription)
+        }
     }
 
     /// Serializes and writes this subtitle to disk using full options.
@@ -318,8 +327,12 @@ public struct Subtitle: Sendable, Hashable {
         to fileURL: URL,
         using options: SubtitleSerializeOptions,
         encoding: String.Encoding = .utf8
-    ) throws {
+    ) throws(SubtitleError) {
         let output = try text(using: options)
-        try output.write(to: fileURL, atomically: true, encoding: encoding)
+        do {
+            try output.write(to: fileURL, atomically: true, encoding: encoding)
+        } catch {
+            throw SubtitleError.fileWriteFailed(path: fileURL.path, details: error.localizedDescription)
+        }
     }
 }

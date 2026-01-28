@@ -14,7 +14,7 @@ enum FixtureSupport {
         "json",
     ]
 
-    static func fixtureText(_ fileName: String, ext: String) throws -> String {
+    static func fixtureText(_ fileName: String, ext: String) throws(any Error) -> String {
         guard let baseURL = Bundle.module.resourceURL else {
             throw FixtureError.resourceBundleMissing
         }
@@ -28,7 +28,7 @@ enum FixtureSupport {
         return try String(contentsOf: url, encoding: .utf8)
     }
 
-    static func sampleText(for formatName: String) throws -> String {
+    static func sampleText(for formatName: String) throws(any Error) -> String {
         try fixtureText("sample", ext: formatName)
     }
 

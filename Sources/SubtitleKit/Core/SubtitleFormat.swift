@@ -40,7 +40,7 @@ public protocol SubtitleFormat: Sendable {
     ///   - content: Subtitle text (BOM-stripped when called via the engine).
     ///   - options: Parsing options including frame rate and detection hints.
     /// - Throws: ``SubtitleError`` on malformed input.
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument
+    func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument
 
     /// Serializes a unified subtitle document into this format's text representation.
     ///
@@ -48,7 +48,7 @@ public protocol SubtitleFormat: Sendable {
     ///   - document: The document to serialize.
     ///   - options: Serialization options including line ending and frame rate.
     /// - Throws: ``SubtitleError`` if serialization fails (for example, invalid frame rate).
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String
+    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String
 }
 
 public extension SubtitleFormat {
