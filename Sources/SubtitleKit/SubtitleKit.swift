@@ -73,6 +73,11 @@ public struct SubtitleKit: Sendable {
 extension SubtitleKit.Registry {
     public static let `default`: Self = .init(adapters: [
         VTTAdapter(),
+        LRCAdapter(),
+        SMIAdapter(),
+        ASSAdapter(),
+        SSAAdapter(),
+        SUBAdapter(),
         SRTAdapter(),
         SBVAdapter(),
     ])
