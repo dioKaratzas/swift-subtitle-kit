@@ -56,8 +56,9 @@ struct SMIAdapter: SubtitleFormatAdapter {
 
             let pRegex = try? NSRegularExpression(pattern: #"^<P[^>]*>([\s\S]*)"#, options: [.caseInsensitive])
             var blankCaption = true
-            if let pRegex, let pMatch = RegexUtils.firstMatch(pRegex, in: contentValue) {
-                var html = RegexUtils.string(contentValue, at: 1, in: pMatch) ?? ""
+            let pSource = contentValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let pRegex, let pMatch = RegexUtils.firstMatch(pRegex, in: pSource) {
+                var html = RegexUtils.string(pSource, at: 1, in: pMatch) ?? ""
                 html = html.replacingOccurrences(of: #"<P[\s\S]+$"#, with: "", options: [.regularExpression, .caseInsensitive])
                 html = html.replacingOccurrences(of: #"<BR\s*/?>\s+"#, with: eol, options: [.regularExpression, .caseInsensitive])
                 html = html.replacingOccurrences(of: #"<BR\s*/?>"#, with: eol, options: [.regularExpression, .caseInsensitive])
@@ -102,8 +103,9 @@ struct SMIAdapter: SubtitleFormatAdapter {
         output.append("<BODY>")
 
         for cue in document.cues {
+            let cueText = cue.plainText.isEmpty ? StringTransforms.cueText(from: cue) : cue.plainText
             output.append("<SYNC Start=\(cue.startTime)>")
-            output.append("  <P Class=LANG>\(encodeHTML(StringTransforms.cueText(from: cue)))\(options.closeSMITags ? "</P>" : "")")
+            output.append("  <P Class=LANG>\(encodeHTML(cueText))\(options.closeSMITags ? "</P>" : "")")
             if options.closeSMITags {
                 output.append("</SYNC>")
             }
