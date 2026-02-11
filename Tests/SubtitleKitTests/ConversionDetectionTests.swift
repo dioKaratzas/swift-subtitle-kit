@@ -27,6 +27,19 @@ struct ConversionDetectionTests {
         #expect(converted.contains("00:00:00.500 --> 00:00:02.000"))
     }
 
+    @Test("Static one-shot convert API")
+    func staticConvertAPI() throws {
+        let srt = "1\n00:00:00,500 --> 00:00:02,000\nHello\n"
+        let converted = try Subtitle.convert(
+            srt,
+            from: .srt,
+            to: .vtt,
+            lineEnding: .lf
+        )
+        #expect(converted.hasPrefix("WEBVTT"))
+        #expect(converted.contains("00:00:00.500 --> 00:00:02.000"))
+    }
+
     @Test("Converts with resync offset")
     func convertWithResync() throws {
         let srt = "1\n00:00:00,500 --> 00:00:02,000\nHello\n"

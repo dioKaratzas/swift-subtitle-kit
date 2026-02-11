@@ -7,7 +7,7 @@ struct SubtitleObjectAPITests {
     @Test("Parses into Subtitle object and converts")
     func parseAndConvert() throws {
         let srt = "1\n00:00:00,250 --> 00:00:01,500\nHello\n"
-        let subtitle = try Subtitle.parse(srt, options: .init(format: .srt))
+        let subtitle = try Subtitle.parse(srt, format: .srt)
         #expect(subtitle.format == .srt)
         #expect(subtitle.cues.count == 1)
 
@@ -48,9 +48,27 @@ struct SubtitleObjectAPITests {
             .appendingPathComponent("subtitlekit-save-test-\(UUID().uuidString).srt")
         defer { try? FileManager.default.removeItem(at: url) }
 
-        try subtitle.save(to: url)
+        try subtitle.save(to: url) // infers .srt from output extension
 
         let raw = try String(contentsOf: url, encoding: .utf8)
         #expect(raw.contains("00:00:00,000 --> 00:00:00,500"))
+    }
+
+    @Test("Save infers format from output extension")
+    func saveInfersOutputFormat() throws {
+        let subtitle = Subtitle(
+            document: .init(format: nil, entries: [
+                .cue(.init(id: 1, startTime: 1000, endTime: 2000, rawText: "Hello", plainText: "Hello"))
+            ]),
+            sourceLineEnding: .lf
+        )
+
+        let url = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("subtitlekit-save-infer-\(UUID().uuidString).vtt")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        try subtitle.save(to: url)
+        let raw = try String(contentsOf: url, encoding: .utf8)
+        #expect(raw.hasPrefix("WEBVTT"))
     }
 }
