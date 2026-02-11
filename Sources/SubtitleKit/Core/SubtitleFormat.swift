@@ -21,4 +21,13 @@ public enum SubtitleFormat: String, CaseIterable, Sendable, Hashable, Codable {
             .trimmingCharacters(in: CharacterSet(charactersIn: "."))
         return SubtitleFormat(rawValue: ext)
     }
+
+    public static func from(fileName: String) -> SubtitleFormat? {
+        let trimmed = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let dot = trimmed.lastIndex(of: ".") else {
+            return nil
+        }
+        let ext = String(trimmed[trimmed.index(after: dot)...])
+        return from(fileExtension: ext)
+    }
 }
