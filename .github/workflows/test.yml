@@ -1,4 +1,4 @@
-name: CI
+name: test
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test (Swift 6.2)
+    name: Test
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-ci')
     runs-on: ubuntu-latest
     container: swift:6.0
