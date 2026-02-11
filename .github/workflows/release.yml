@@ -66,10 +66,40 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
+      - name: Build release overview
+        run: |
+          TAG="${{ steps.normalize.outputs.tag }}"
+          cat > "$RUNNER_TEMP/release-overview.md" <<EOF
+          ## Overview
+
+          Release \`$TAG\` for **swift-subtitle-kit**.
+
+          Auto-generated release notes are grouped by labels using \`.github/release.yml\`.
+
+          ## Installation
+
+          \`\`\`swift
+          .package(url: "https://github.com/dioKaratzas/swift-subtitle-kit.git", from: "${TAG#v}")
+          \`\`\`
+
+          ## Documentation
+
+          https://diokaratzas.github.io/swift-subtitle-kit/documentation/subtitlekit/
+          EOF
+
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.normalize.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          generate_release_notes: true
-          prerelease: ${{ inputs.prerelease }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.normalize.outputs.tag }}"
+          PRE_FLAG=""
+          if [[ "${{ inputs.prerelease }}" == "true" ]]; then
+            PRE_FLAG="--prerelease"
+          fi
+
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes \
+            --notes-file "$RUNNER_TEMP/release-overview.md" \
+            $PRE_FLAG
