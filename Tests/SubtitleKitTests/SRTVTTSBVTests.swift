@@ -7,7 +7,7 @@ struct SRTVTTSBVTests {
     func extensionDetectionWins() {
         let content = "WEBVTT\n\n00:00.000 --> 00:01.000\nHello"
         let detected = Subtitle.detectFormat(in: content, fileExtension: "srt")
-        #expect(detected == .srt)
+        #expect(detected.isEqual(.srt))
     }
 
     @Test("Parses and serializes SRT")

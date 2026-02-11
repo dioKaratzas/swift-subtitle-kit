@@ -2,7 +2,7 @@ import Foundation
 
 enum TimestampCodec {
     static func parseSRT(_ value: String) throws -> Int {
-        try parse(value, pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: false, format: .srt)
+        try parse(value, pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: false, formatName: "srt")
     }
 
     static func parseVTT(_ value: String) throws -> Int {
@@ -12,24 +12,24 @@ enum TimestampCodec {
         ]
 
         for pattern in patterns {
-            if let milliseconds = try parseUsingFlexiblePattern(value, pattern: pattern, format: .vtt) {
+            if let milliseconds = try parseUsingFlexiblePattern(value, pattern: pattern, formatName: "vtt") {
                 return milliseconds
             }
         }
 
-        throw SubtitleError.invalidTimestamp(format: .vtt, value: value)
+        throw SubtitleError.invalidTimestamp(format: "vtt", value: value)
     }
 
     static func parseSBV(_ value: String) throws -> Int {
-        try parse(value, pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: false, format: .sbv)
+        try parse(value, pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: false, formatName: "sbv")
     }
 
     static func parseSSA(_ value: String) throws -> Int {
-        try parse(value, pattern: #"^\s*(\d+):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: true, format: .ssa)
+        try parse(value, pattern: #"^\s*(\d+):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: true, formatName: "ssa")
     }
 
     static func parseLRC(_ value: String) throws -> Int {
-        try parse(value, pattern: #"^\s*(\d+):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: true, format: .lrc, hasHours: false)
+        try parse(value, pattern: #"^\s*(\d+):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: true, formatName: "lrc", hasHours: false)
     }
 
     static func formatSRT(_ milliseconds: Int) -> String {
@@ -72,13 +72,13 @@ enum TimestampCodec {
         _ value: String,
         pattern: String,
         hundredths: Bool,
-        format: SubtitleFormat,
+        formatName: String,
         hasHours: Bool = true
     ) throws -> Int {
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = RegexUtils.firstMatch(regex, in: value)
         else {
-            throw SubtitleError.invalidTimestamp(format: format, value: value)
+            throw SubtitleError.invalidTimestamp(format: formatName, value: value)
         }
 
         if hasHours {
@@ -87,7 +87,7 @@ enum TimestampCodec {
             let s = Int(RegexUtils.string(value, at: 3, in: match) ?? "") ?? -1
             let f = Int(RegexUtils.string(value, at: 4, in: match) ?? "0") ?? 0
             if h < 0 || m < 0 || s < 0 {
-                throw SubtitleError.invalidTimestamp(format: format, value: value)
+                throw SubtitleError.invalidTimestamp(format: formatName, value: value)
             }
             let fraction = hundredths ? (f * 10) : f
             return h * 3_600_000 + m * 60_000 + s * 1_000 + fraction
@@ -97,7 +97,7 @@ enum TimestampCodec {
         let s = Int(RegexUtils.string(value, at: 2, in: match) ?? "") ?? -1
         let f = Int(RegexUtils.string(value, at: 3, in: match) ?? "0") ?? 0
         if m < 0 || s < 0 {
-            throw SubtitleError.invalidTimestamp(format: format, value: value)
+            throw SubtitleError.invalidTimestamp(format: formatName, value: value)
         }
         let fraction = hundredths ? (f * 10) : f
         return m * 60_000 + s * 1_000 + fraction
@@ -106,7 +106,7 @@ enum TimestampCodec {
     private static func parseUsingFlexiblePattern(
         _ value: String,
         pattern: String,
-        format: SubtitleFormat
+        formatName: String
     ) throws -> Int? {
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = RegexUtils.firstMatch(regex, in: value)
@@ -133,6 +133,6 @@ enum TimestampCodec {
             }
         }
 
-        throw SubtitleError.invalidTimestamp(format: format, value: value)
+        throw SubtitleError.invalidTimestamp(format: formatName, value: value)
     }
 }

@@ -1,7 +1,9 @@
 import Foundation
 
 public struct Subtitle: Sendable, Hashable {
-    private static let engine = SubtitleEngine.default
+    private static var engine: SubtitleEngine {
+        SubtitleEngine(registry: .current)
+    }
 
     public var document: SubtitleDocument
     public var sourceLineEnding: LineEnding
@@ -17,8 +19,13 @@ public struct Subtitle: Sendable, Hashable {
         self.sourceHadByteOrderMark = sourceHadByteOrderMark
     }
 
+    public var formatName: String? {
+        document.formatName
+    }
+
     public var format: SubtitleFormat? {
-        document.format
+        guard let formatName else { return nil }
+        return Self.engine.resolveFormat(named: formatName)
     }
 
     public var entries: [SubtitleEntry] {
@@ -32,6 +39,10 @@ public struct Subtitle: Sendable, Hashable {
 
     public static func supportedFormats() -> [SubtitleFormat] {
         engine.supportedFormats()
+    }
+
+    public static func supportedFormatNames() -> [String] {
+        SubtitleFormatRegistry.current.supportedFormatNames
     }
 
     public static func detectFormat(
@@ -156,7 +167,9 @@ public struct Subtitle: Sendable, Hashable {
         samiLanguageCode: String = "en-US",
         closeSMITags: Bool = false
     ) throws -> String {
-        let resolvedFormat = format ?? document.format
+        let resolvedFormat = format
+            ?? (formatName.flatMap { Self.engine.resolveFormat(named: $0) })
+
         guard let resolvedFormat else {
             throw SubtitleError.unableToDetectFormat
         }
@@ -193,7 +206,10 @@ public struct Subtitle: Sendable, Hashable {
             samiLanguageCode: samiLanguageCode,
             closeSMITags: closeSMITags
         )
-        let parsed = try Self.engine.parse(convertedText, options: .init(format: format, fps: fps))
+        let parsed = try Self.engine.parse(
+            convertedText,
+            options: .init(format: format, fps: fps)
+        )
         return Subtitle(
             document: parsed,
             sourceLineEnding: lineEnding ?? sourceLineEnding,
@@ -260,12 +276,12 @@ public struct Subtitle: Sendable, Hashable {
         closeSMITags: Bool = false,
         encoding: String.Encoding = .utf8
     ) throws {
-        let outputFormat = format
-            ?? SubtitleFormat.from(fileName: fileURL.lastPathComponent)
-            ?? self.format
+        let extensionGuess = fileURL.pathExtension.isEmpty
+            ? nil
+            : Self.engine.detectFormat(content: "", fileExtension: fileURL.pathExtension)
 
         let output = try text(
-            format: outputFormat,
+            format: format ?? extensionGuess,
             lineEnding: lineEnding,
             fps: fps,
             samiTitle: samiTitle,

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct SubtitleParseOptions: Sendable, Hashable {
+public struct SubtitleParseOptions: Sendable {
     public var format: SubtitleFormat?
     public var fileName: String?
     public var fileExtension: String?
@@ -22,16 +22,16 @@ public struct SubtitleParseOptions: Sendable, Hashable {
     }
 }
 
-struct SubtitleSerializeOptions: Sendable, Hashable {
-    var format: SubtitleFormat
-    var lineEnding: LineEnding
-    var fps: Double?
-    var samiTitle: String?
-    var samiLanguageName: String
-    var samiLanguageCode: String
-    var closeSMITags: Bool
+public struct SubtitleSerializeOptions: Sendable {
+    public var format: SubtitleFormat
+    public var lineEnding: LineEnding
+    public var fps: Double?
+    public var samiTitle: String?
+    public var samiLanguageName: String
+    public var samiLanguageCode: String
+    public var closeSMITags: Bool
 
-    init(
+    public init(
         format: SubtitleFormat,
         lineEnding: LineEnding = .crlf,
         fps: Double? = nil,
@@ -66,7 +66,5 @@ public enum LineEnding: String, Sendable, Hashable, Codable {
     case lf = "\n"
     case crlf = "\r\n"
 
-    public var value: String {
-        rawValue
-    }
+    public var value: String { rawValue }
 }

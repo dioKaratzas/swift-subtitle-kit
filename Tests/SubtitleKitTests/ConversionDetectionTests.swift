@@ -7,7 +7,7 @@ struct ConversionDetectionTests {
     func detectsByFileName() {
         let content = "Hello world"
         let detected = Subtitle.detectFormat(in: content, fileName: "track.srt")
-        #expect(detected == .srt)
+        #expect(detected.isEqual(.srt))
     }
 
     @Test("Normalizes BOM and reports line ending")
@@ -53,7 +53,7 @@ struct ConversionDetectionTests {
 
     @Test("Resync by transform closure")
     func resyncUsingTransform() throws {
-        let subtitle = Subtitle(document: SubtitleDocument(format: .srt, entries: [
+        let subtitle = Subtitle(document: SubtitleDocument(formatName: "srt", entries: [
             .cue(.init(id: 1, startTime: 1000, endTime: 2000, rawText: "Hi", plainText: "Hi"))
         ]))
         let shifted = subtitle.resync { start, end, frame in

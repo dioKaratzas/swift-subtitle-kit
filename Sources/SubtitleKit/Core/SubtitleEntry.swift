@@ -1,19 +1,17 @@
 import Foundation
 
 public struct SubtitleDocument: Sendable, Hashable {
-    public var format: SubtitleFormat?
+    public var formatName: String?
     public var entries: [SubtitleEntry]
 
-    public init(format: SubtitleFormat? = nil, entries: [SubtitleEntry]) {
-        self.format = format
+    public init(formatName: String? = nil, entries: [SubtitleEntry]) {
+        self.formatName = formatName
         self.entries = entries
     }
 
     public var cues: [SubtitleCue] {
         entries.compactMap {
-            if case let .cue(cue) = $0 {
-                return cue
-            }
+            if case let .cue(cue) = $0 { return cue }
             return nil
         }
     }
@@ -27,11 +25,11 @@ public enum SubtitleEntry: Sendable, Hashable, Identifiable {
     public var id: Int {
         switch self {
         case let .cue(value):
-            return value.id
+            value.id
         case let .metadata(value):
-            return value.id
+            value.id
         case let .style(value):
-            return value.id
+            value.id
         }
     }
 }
@@ -46,9 +44,7 @@ public struct SubtitleCue: Sendable, Hashable, Identifiable {
             self.end = end
         }
 
-        public var count: Int {
-            end - start
-        }
+        public var count: Int { end - start }
     }
 
     public var id: Int
@@ -80,9 +76,7 @@ public struct SubtitleCue: Sendable, Hashable, Identifiable {
         self.attributes = attributes
     }
 
-    public var duration: Int {
-        endTime - startTime
-    }
+    public var duration: Int { endTime - startTime }
 }
 
 public struct SubtitleMetadata: Sendable, Hashable, Identifiable {

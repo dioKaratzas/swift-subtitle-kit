@@ -8,26 +8,26 @@ struct SubtitleObjectAPITests {
     func parseAndConvert() throws {
         let srt = "1\n00:00:00,250 --> 00:00:01,500\nHello\n"
         let subtitle = try Subtitle.parse(srt, format: .srt)
-        #expect(subtitle.format == .srt)
+        #expect(subtitle.format.isEqual(.srt))
         #expect(subtitle.cues.count == 1)
 
         let vtt = try subtitle.convertedText(to: .vtt, lineEnding: .lf)
         #expect(vtt.hasPrefix("WEBVTT"))
 
         let converted = try subtitle.convert(to: .vtt, lineEnding: .lf)
-        #expect(converted.format == .vtt)
+        #expect(converted.format.isEqual(.vtt))
         #expect(converted.cues.count == 1)
     }
 
     @Test("Resyncs and serializes from Subtitle object")
     func resyncAndSerialize() throws {
         let subtitle = Subtitle(
-            document: .init(format: .srt, entries: [
+            document: .init(formatName: "srt", entries: [
                 .cue(.init(id: 1, startTime: 1000, endTime: 1500, rawText: "Hi", plainText: "Hi"))
             ])
         )
 
-        let shifted = subtitle.resync(.init(offset: 500))
+        let shifted = subtitle.resync(SubtitleResyncOptions(offset: 500))
         #expect(shifted.cues[0].startTime == 1500)
         #expect(shifted.cues[0].endTime == 2000)
 
@@ -38,7 +38,7 @@ struct SubtitleObjectAPITests {
     @Test("Saves subtitle file")
     func saveToDisk() throws {
         let subtitle = Subtitle(
-            document: .init(format: .srt, entries: [
+            document: .init(formatName: "srt", entries: [
                 .cue(.init(id: 1, startTime: 0, endTime: 500, rawText: "Hello", plainText: "Hello"))
             ]),
             sourceLineEnding: .lf
@@ -57,7 +57,7 @@ struct SubtitleObjectAPITests {
     @Test("Save infers format from output extension")
     func saveInfersOutputFormat() throws {
         let subtitle = Subtitle(
-            document: .init(format: nil, entries: [
+            document: .init(entries: [
                 .cue(.init(id: 1, startTime: 1000, endTime: 2000, rawText: "Hello", plainText: "Hello"))
             ]),
             sourceLineEnding: .lf

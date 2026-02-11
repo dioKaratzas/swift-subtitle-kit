@@ -1,13 +1,11 @@
 import Foundation
 
 struct SubtitleEngine: Sendable {
-    let registry: SubtitleRegistry
+    let registry: SubtitleFormatRegistry
 
-    init(registry: SubtitleRegistry = .default) {
+    init(registry: SubtitleFormatRegistry = .standard) {
         self.registry = registry
     }
-
-    static let `default` = SubtitleEngine()
 
     func supportedFormats() -> [SubtitleFormat] {
         registry.supportedFormats
@@ -27,34 +25,32 @@ struct SubtitleEngine: Sendable {
     }
 
     func parse(_ content: String, options: SubtitleParseOptions = .init()) throws -> SubtitleDocument {
-        let format = options.format
-            ?? (options.fileName.flatMap(SubtitleFormat.from(fileName:)))
-            ?? (options.fileExtension.flatMap(SubtitleFormat.from(fileExtension:)))
+        let resolvedFormat = options.format
+            ?? options.fileName.flatMap(registry.resolve(fileName:))
+            ?? options.fileExtension.flatMap(registry.resolve(fileExtension:))
             ?? detectFormat(
                 content: content,
                 fileName: options.fileName,
                 fileExtension: options.fileExtension
             )
 
-        guard let format else {
+        guard let resolvedFormat else {
             throw SubtitleError.unableToDetectFormat
         }
-        guard let adapter = registry.adapter(for: format) else {
-            throw SubtitleError.unsupportedFormat(format.rawValue)
-        }
 
-        var parsed = try adapter.parse(content, options: options)
-        if parsed.format == nil {
-            parsed.format = format
+        var parsed = try resolvedFormat.parse(content, options: options)
+        if parsed.formatName == nil {
+            parsed.formatName = resolvedFormat.name
         }
         return parsed
     }
 
     func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
-        guard let adapter = registry.adapter(for: options.format) else {
-            throw SubtitleError.unsupportedFormat(options.format.rawValue)
-        }
-        return try adapter.serialize(document, options: options)
+        try options.format.serialize(document, options: options)
+    }
+
+    func resolveFormat(named name: String) -> SubtitleFormat? {
+        registry.resolve(name: name)
     }
 
     func resyncDocument(_ document: SubtitleDocument, options: SubtitleResyncOptions) -> SubtitleDocument {

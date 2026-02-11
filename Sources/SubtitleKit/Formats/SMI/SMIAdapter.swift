@@ -1,14 +1,14 @@
 import Foundation
 
-struct SMIAdapter: SubtitleFormatAdapter {
-    let format: SubtitleFormat = .smi
+public struct SMIFormat: SubtitleFormat {
+    public let name = "smi"
 
-    func canParse(_ content: String) -> Bool {
+    public func canParse(_ content: String) -> Bool {
         let text = TextSanitizer.stripByteOrderMark(from: content)
         return text.range(of: #"<SAMI[^>]*>[\s\S]*<BODY[^>]*>"#, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
         let normalized = TextSanitizer.stripByteOrderMark(from: content)
         let eol = "\n"
         var entries: [SubtitleEntry] = []
@@ -39,7 +39,7 @@ struct SMIAdapter: SubtitleFormatAdapter {
                   let startValue = RegexUtils.string(part, at: 1, in: match),
                   let start = Int(startValue)
             else {
-                throw SubtitleError.malformedBlock(format: .smi, details: part)
+                throw SubtitleError.malformedBlock(format: "smi", details: part)
             }
 
             var cue = SubtitleCue(
@@ -83,10 +83,10 @@ struct SMIAdapter: SubtitleFormatAdapter {
             }
         }
 
-        return SubtitleDocument(format: .smi, entries: entries)
+        return SubtitleDocument(formatName: "smi", entries: entries)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
         let eol = options.lineEnding.value
         var output: [String] = []
 

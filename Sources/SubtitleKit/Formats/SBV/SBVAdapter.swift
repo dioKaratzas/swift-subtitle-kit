@@ -1,14 +1,14 @@
 import Foundation
 
-struct SBVAdapter: SubtitleFormatAdapter {
-    let format: SubtitleFormat = .sbv
+public struct SBVFormat: SubtitleFormat {
+    public let name = "sbv"
 
-    func canParse(_ content: String) -> Bool {
+    public func canParse(_ content: String) -> Bool {
         let text = TextSanitizer.stripByteOrderMark(from: content)
         return text.range(of: #"\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*[,;]\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
     }
 
-    func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
+    public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
         let normalized = TextSanitizer.stripByteOrderMark(from: content)
         let blocks = StringTransforms.splitBlocks(normalized)
         var entries: [SubtitleEntry] = []
@@ -19,7 +19,7 @@ struct SBVAdapter: SubtitleFormatAdapter {
 
             let timingParts = timingLine.components(separatedBy: CharacterSet(charactersIn: ",;"))
             guard timingParts.count == 2 else {
-                throw SubtitleError.malformedBlock(format: .sbv, details: timingLine)
+                throw SubtitleError.malformedBlock(format: "sbv", details: timingLine)
             }
 
             let start = try TimestampCodec.parseSBV(timingParts[0])
@@ -39,10 +39,10 @@ struct SBVAdapter: SubtitleFormatAdapter {
             entries.append(.cue(cue))
         }
 
-        return SubtitleDocument(format: .sbv, entries: entries)
+        return SubtitleDocument(formatName: "sbv", entries: entries)
     }
 
-    func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
+    public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
         let eol = options.lineEnding.value
         var blocks: [String] = []
 

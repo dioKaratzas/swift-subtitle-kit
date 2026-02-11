@@ -2,6 +2,18 @@ import Foundation
 @testable import SubtitleKit
 
 enum FixtureSupport {
+    static let fixtureFormatNames = [
+        "srt",
+        "vtt",
+        "sbv",
+        "sub",
+        "ass",
+        "ssa",
+        "lrc",
+        "smi",
+        "json",
+    ]
+
     static func fixtureText(_ fileName: String, ext: String) throws -> String {
         guard let baseURL = Bundle.module.resourceURL else {
             throw FixtureError.resourceBundleMissing
@@ -16,8 +28,33 @@ enum FixtureSupport {
         return try String(contentsOf: url, encoding: .utf8)
     }
 
-    static func sampleText(for format: SubtitleFormat) throws -> String {
-        try fixtureText("sample", ext: format.rawValue)
+    static func sampleText(for formatName: String) throws -> String {
+        try fixtureText("sample", ext: formatName)
+    }
+
+    static func format(named name: String) -> SubtitleFormat {
+        switch name.lowercased() {
+        case "srt":
+            return .srt
+        case "vtt":
+            return .vtt
+        case "sbv":
+            return .sbv
+        case "sub":
+            return .sub
+        case "ass":
+            return .ass
+        case "ssa":
+            return .ssa
+        case "lrc":
+            return .lrc
+        case "smi":
+            return .smi
+        case "json":
+            return .json
+        default:
+            preconditionFailure("Unsupported fixture format: \(name)")
+        }
     }
 
     static func generatedSRT(cueCount: Int) -> String {
