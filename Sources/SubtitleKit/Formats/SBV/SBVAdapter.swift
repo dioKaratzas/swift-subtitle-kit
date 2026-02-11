@@ -1,5 +1,6 @@
 import Foundation
 
+/// SubViewer (`.sbv`) subtitle format adapter.
 public struct SBVFormat: SubtitleFormat {
     public let name = "sbv"
 

@@ -1,5 +1,6 @@
 import Foundation
 
+/// ASS (`.ass`) subtitle format adapter.
 public struct ASSFormat: SubtitleFormat {
     public let name = "ass"
 

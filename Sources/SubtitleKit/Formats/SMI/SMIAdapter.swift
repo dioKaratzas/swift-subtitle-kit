@@ -1,5 +1,6 @@
 import Foundation
 
+/// SAMI (`.smi`) subtitle format adapter.
 public struct SMIFormat: SubtitleFormat {
     public let name = "smi"
 

@@ -1,5 +1,6 @@
 import Foundation
 
+/// LRC (`.lrc`) subtitle format adapter.
 public struct LRCFormat: SubtitleFormat {
     public let name = "lrc"
 

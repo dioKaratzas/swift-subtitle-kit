@@ -1,5 +1,6 @@
 import Foundation
 
+/// JSON compatibility subtitle adapter.
 public struct JSONFormat: SubtitleFormat {
     public let name = "json"
 

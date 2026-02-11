@@ -1,11 +1,18 @@
 import Foundation
 
+/// Errors thrown by subtitle format detection, parsing, and serialization.
 public enum SubtitleError: Error, Sendable, Hashable, LocalizedError {
+    /// Requested format is not supported.
     case unsupportedFormat(String)
+    /// No parser could be selected from explicit hints or content detection.
     case unableToDetectFormat
+    /// Format-specific structural issue while parsing.
     case malformedBlock(format: String, details: String)
+    /// Timestamp could not be parsed for the specified format.
     case invalidTimestamp(format: String, value: String)
+    /// Encountered a known-but-unsupported format variant.
     case unsupportedVariant(format: String, details: String)
+    /// Invalid frame-rate value.
     case invalidFrameRate(Double)
 
     public var errorDescription: String? {

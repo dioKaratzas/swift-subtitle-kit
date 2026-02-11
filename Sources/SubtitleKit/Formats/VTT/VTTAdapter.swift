@@ -1,5 +1,6 @@
 import Foundation
 
+/// WebVTT (`.vtt`) subtitle format adapter.
 public struct VTTFormat: SubtitleFormat {
     public let name = "vtt"
 

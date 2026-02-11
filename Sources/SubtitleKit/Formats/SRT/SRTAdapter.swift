@@ -1,5 +1,6 @@
 import Foundation
 
+/// SubRip (`.srt`) subtitle format adapter.
 public struct SRTFormat: SubtitleFormat {
     public let name = "srt"
 
