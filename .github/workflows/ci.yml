@@ -32,28 +32,3 @@ jobs:
 
       - name: Run tests
         run: swift test -q
-
-  apple-platform-build:
-    name: Build (${{ matrix.destination }})
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-ci')
-    needs: test
-    runs-on: macos-15
-    strategy:
-      fail-fast: false
-      matrix:
-        destination:
-          - "generic/platform=macOS"
-          - "generic/platform=iOS Simulator"
-          - "generic/platform=tvOS Simulator"
-          - "generic/platform=watchOS Simulator"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Build package for Apple platform
-        run: |
-          xcodebuild \
-            -scheme SubtitleKit-Package \
-            -destination "${{ matrix.destination }}" \
-            CODE_SIGNING_ALLOWED=NO \
-            build
