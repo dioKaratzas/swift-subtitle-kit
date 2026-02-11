@@ -1,5 +1,8 @@
 # SubtitleKit
 
+[![CI](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/ci.yml)
+[![Docs](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/docs.yml/badge.svg)](https://github.com/dioKaratzas/swift-subtitle-kit/actions/workflows/docs.yml)
+
 A Swift 6 library for parsing, converting, resyncing, and saving subtitle files.
 
 SubtitleKit normalizes every supported format into a single `SubtitleDocument` model, letting you parse once and convert to any output format from the same object.
@@ -35,7 +38,7 @@ Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/<owner>/swift-subtitle-kit", from: "1.0.0")
+    .package(url: "https://github.com/dioKaratzas/swift-subtitle-kit.git", from: "1.0.0")
 ]
 ```
 
@@ -51,6 +54,10 @@ Then add the library product to your target dependencies:
 ```
 
 **Requirements:** Swift 6.2+, any Apple platform or Linux.
+
+## Documentation
+
+- API Docs: https://diokaratzas.github.io/swift-subtitle-kit/documentation/subtitlekit/
 
 ## Quick Start
 
@@ -371,4 +378,30 @@ The package uses **Swift Testing** (`import Testing`) with:
 
 ```bash
 swift test
+```
+
+GitHub Actions CI for pull requests is intentionally manual to reduce traffic:
+
+1. Open a PR targeting `main`.
+2. Add the `run-ci` label to trigger CI.
+3. Or run the workflow manually from the Actions tab.
+
+## Generating DocC
+
+Generate static API + article docs locally without adding `swift-docc-plugin`
+to this repository's `Package.swift`:
+
+```bash
+scripts/generate-docc.sh
+```
+
+Output defaults to `.build/docc-site` and includes both public symbols and
+content from `Sources/SubtitleKit/SubtitleKit.docc`.
+
+Useful options:
+
+```bash
+scripts/generate-docc.sh --output docs --hosting-base-path swift-subtitle-kit
+scripts/generate-docc.sh --no-hosting-base-path
+scripts/generate-docc.sh --open
 ```

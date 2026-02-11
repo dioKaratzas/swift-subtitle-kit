@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    types:
+      - labeled
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Swift 6.2)
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-ci')
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Toolchain info
+        run: swift --version
+
+      - name: Run tests
+        run: swift test -q
+
+  apple-platform-build:
+    name: Build (${{ matrix.destination }})
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run-ci')
+    needs: test
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        destination:
+          - "generic/platform=macOS"
+          - "generic/platform=iOS Simulator"
+          - "generic/platform=tvOS Simulator"
+          - "generic/platform=watchOS Simulator"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Build package for Apple platform
+        run: |
+          xcodebuild \
+            -scheme SubtitleKit-Package \
+            -destination "${{ matrix.destination }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
