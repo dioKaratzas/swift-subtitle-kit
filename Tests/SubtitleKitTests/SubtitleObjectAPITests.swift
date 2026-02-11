@@ -11,7 +11,7 @@ struct SubtitleObjectAPITests {
         #expect(subtitle.format.isEqual(.srt))
         #expect(subtitle.cues.count == 1)
 
-        let vtt = try subtitle.convertedText(to: .vtt, lineEnding: .lf)
+        let vtt = try subtitle.text(format: .vtt, lineEnding: .lf)
         #expect(vtt.hasPrefix("WEBVTT"))
 
         let converted = try subtitle.convert(to: .vtt, lineEnding: .lf)

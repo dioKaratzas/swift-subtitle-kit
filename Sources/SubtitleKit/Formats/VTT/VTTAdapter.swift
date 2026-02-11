@@ -5,12 +5,11 @@ public struct VTTFormat: SubtitleFormat {
     public let name = "vtt"
 
     public func canParse(_ content: String) -> Bool {
-        let text = TextSanitizer.stripByteOrderMark(from: content)
-        return text.range(of: #"^\s*WEBVTT"#, options: [.regularExpression]) != nil
+        content.range(of: #"^\s*WEBVTT"#, options: [.regularExpression]) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
-        let normalized = TextSanitizer.stripByteOrderMark(from: content)
+        let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
         var entries: [SubtitleEntry] = []
         var cueIndex = 1
@@ -94,7 +93,7 @@ public struct VTTFormat: SubtitleFormat {
             switch entry {
             case let .metadata(meta):
                 if meta.key == "WEBVTT" { continue }
-                blocks.append(serializeMetadata(meta))
+                blocks.append(serializeMetadata(meta, eol: eol))
             case let .cue(cue):
                 var lines: [String] = []
                 if let cueIdentifier = cue.cueIdentifier, !cueIdentifier.isEmpty {
@@ -134,16 +133,16 @@ public struct VTTFormat: SubtitleFormat {
         return nil
     }
 
-    private func serializeMetadata(_ metadata: SubtitleMetadata) -> String {
+    private func serializeMetadata(_ metadata: SubtitleMetadata, eol: String) -> String {
         switch metadata.value {
         case let .text(value):
             if value.isEmpty {
                 return metadata.key
             }
-            return metadata.key + "\n" + value
+            return metadata.key + eol + value
         case let .fields(fields):
-            let body = fields.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
-            return metadata.key + (body.isEmpty ? "" : "\n\(body)")
+            let body = fields.map { "\($0.key): \($0.value)" }.joined(separator: eol)
+            return metadata.key + (body.isEmpty ? "" : eol + body)
         }
     }
 }

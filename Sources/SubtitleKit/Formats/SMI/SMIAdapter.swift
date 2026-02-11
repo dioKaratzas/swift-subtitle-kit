@@ -5,12 +5,11 @@ public struct SMIFormat: SubtitleFormat {
     public let name = "smi"
 
     public func canParse(_ content: String) -> Bool {
-        let text = TextSanitizer.stripByteOrderMark(from: content)
-        return text.range(of: #"<SAMI[^>]*>[\s\S]*<BODY[^>]*>"#, options: [.regularExpression, .caseInsensitive]) != nil
+        content.range(of: #"<SAMI[^>]*>[\s\S]*<BODY[^>]*>"#, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
-        let normalized = TextSanitizer.stripByteOrderMark(from: content)
+        let normalized = content
         let eol = "\n"
         var entries: [SubtitleEntry] = []
         var entryID = 1
@@ -51,7 +50,7 @@ public struct SMIFormat: SubtitleFormat {
                 plainText: ""
             )
 
-            let contentValue = RegexUtils.string(part, at: 2, in: match) ?? ""
+            let contentValue = (RegexUtils.string(part, at: 2, in: match) ?? "")
                 .replacingOccurrences(of: #"^</SYNC[^>]*>"#, with: "", options: [.regularExpression, .caseInsensitive])
             cue.rawText = contentValue
 

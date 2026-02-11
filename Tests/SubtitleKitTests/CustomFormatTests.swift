@@ -72,7 +72,7 @@ struct CustomFormatTests {
         #expect(parsed.format.isEqual(.line))
         #expect(parsed.cues.count == 2)
 
-        let srt = try parsed.convertedText(to: .srt, lineEnding: .lf)
+        let srt = try parsed.text(format: .srt, lineEnding: .lf)
         #expect(srt.contains("00:00:00,000 --> 00:00:01,000"))
 
         let backToLine = try Subtitle.convert(

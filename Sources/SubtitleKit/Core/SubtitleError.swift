@@ -1,18 +1,22 @@
 import Foundation
 
 /// Errors thrown by subtitle format detection, parsing, and serialization.
+///
+/// All cases include enough context to produce useful diagnostics.
+/// The ``errorDescription`` property returns a human-readable message
+/// suitable for logging.
 public enum SubtitleError: Error, Sendable, Hashable, LocalizedError {
-    /// Requested format is not supported.
+    /// The named format is not registered in the current ``SubtitleFormatRegistry``.
     case unsupportedFormat(String)
-    /// No parser could be selected from explicit hints or content detection.
+    /// No parser could be selected from explicit hints or content-based detection.
     case unableToDetectFormat
-    /// Format-specific structural issue while parsing.
+    /// A structural issue was found while parsing a specific format block.
     case malformedBlock(format: String, details: String)
-    /// Timestamp could not be parsed for the specified format.
+    /// A timestamp string could not be parsed for the expected format.
     case invalidTimestamp(format: String, value: String)
-    /// Encountered a known-but-unsupported format variant.
+    /// The input uses a recognized but unsupported variant of a format.
     case unsupportedVariant(format: String, details: String)
-    /// Invalid frame-rate value.
+    /// The provided frame rate is non-positive or otherwise invalid.
     case invalidFrameRate(Double)
 
     public var errorDescription: String? {

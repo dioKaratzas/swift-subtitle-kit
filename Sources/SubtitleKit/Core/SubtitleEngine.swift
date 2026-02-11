@@ -16,18 +16,25 @@ struct SubtitleEngine: Sendable {
         fileName: String? = nil,
         fileExtension: String? = nil
     ) -> SubtitleFormat? {
-        SubtitleDetector.detectFormat(
-            content: content,
-            registry: registry,
-            fileName: fileName,
-            fileExtension: fileExtension
-        )
+        let sanitized = SubtitleNormalizer.stripByteOrderMark(content)
+
+        if let fileExtension,
+           let format = registry.resolve(fileExtension: fileExtension) {
+            return format
+        }
+
+        if let fileName,
+           let format = registry.resolve(fileName: fileName) {
+            return format
+        }
+
+        return registry.detectFormat(content: sanitized)
     }
 
     func parse(_ content: String, options: SubtitleParseOptions = .init()) throws -> SubtitleDocument {
         let resolvedFormat = options.format
-            ?? options.fileName.flatMap(registry.resolve(fileName:))
             ?? options.fileExtension.flatMap(registry.resolve(fileExtension:))
+            ?? options.fileName.flatMap(registry.resolve(fileName:))
             ?? detectFormat(
                 content: content,
                 fileName: options.fileName,

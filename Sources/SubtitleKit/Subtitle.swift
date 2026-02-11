@@ -46,6 +46,8 @@ public struct Subtitle: Sendable, Hashable {
         document.cues
     }
 
+    // MARK: - Static Helpers
+
     /// Returns all currently registered formats in detection order.
     public static func supportedFormats() -> [SubtitleFormat] {
         engine.supportedFormats()
@@ -64,6 +66,8 @@ public struct Subtitle: Sendable, Hashable {
     ) -> SubtitleFormat? {
         engine.detectFormat(content: content, fileName: fileName, fileExtension: fileExtension)
     }
+
+    // MARK: - Parse
 
     /// Parses raw subtitle text into a ``Subtitle`` value.
     public static func parse(
@@ -99,6 +103,8 @@ public struct Subtitle: Sendable, Hashable {
             )
         )
     }
+
+    // MARK: - Load
 
     /// Loads and parses subtitle content from disk.
     public static func load(
@@ -139,6 +145,8 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
+    // MARK: - Convert (static one-shot)
+
     /// One-shot convert API from source text to target format text.
     public static func convert(
         _ content: String,
@@ -147,43 +155,67 @@ public struct Subtitle: Sendable, Hashable {
         lineEnding: LineEnding = .crlf,
         fps: Double? = nil,
         preserveWhitespaceCaptions: Bool = false,
-        resync: SubtitleResyncOptions? = nil,
-        samiTitle: String? = nil,
-        samiLanguageName: String = "English",
-        samiLanguageCode: String = "en-US",
-        closeSMITags: Bool = false
+        resync: SubtitleResyncOptions? = nil
+    ) throws -> String {
+        try convert(
+            content,
+            from: sourceFormat,
+            using: .init(
+                format: targetFormat,
+                lineEnding: lineEnding,
+                fps: fps
+            ),
+            preserveWhitespaceCaptions: preserveWhitespaceCaptions,
+            resync: resync
+        )
+    }
+
+    /// One-shot convert API using full serialization options.
+    ///
+    /// Use this overload when target formats require additional settings
+    /// (for example, SAMI title/language/tag options).
+    public static func convert(
+        _ content: String,
+        from sourceFormat: SubtitleFormat? = nil,
+        using options: SubtitleSerializeOptions,
+        preserveWhitespaceCaptions: Bool = false,
+        resync: SubtitleResyncOptions? = nil
     ) throws -> String {
         var subtitle = try parse(
             content,
             options: SubtitleParseOptions(
                 format: sourceFormat,
                 preserveWhitespaceCaptions: preserveWhitespaceCaptions,
-                fps: fps
+                fps: options.fps
             )
         )
         if let resync {
             subtitle = subtitle.resync(resync)
         }
-        return try subtitle.convertedText(
-            to: targetFormat,
-            lineEnding: lineEnding,
-            fps: fps,
-            samiTitle: samiTitle,
-            samiLanguageName: samiLanguageName,
-            samiLanguageCode: samiLanguageCode,
-            closeSMITags: closeSMITags
-        )
+        return try subtitle.text(using: options)
+    }
+
+    // MARK: - Serialize
+
+    /// Serializes this subtitle value to text using full options.
+    ///
+    /// This is the primary serialization entry point. All format-specific
+    /// options (such as SAMI settings) live in ``SubtitleSerializeOptions``.
+    public func text(using options: SubtitleSerializeOptions) throws -> String {
+        try Self.engine.serialize(document, options: options)
     }
 
     /// Serializes this subtitle value to text.
+    ///
+    /// When `format` is `nil`, the source format is used. When `lineEnding`
+    /// is `nil`, the source line ending is preserved.
+    ///
+    /// For SAMI-specific options, use ``text(using:)`` with a
+    /// ``SubtitleSerializeOptions`` value instead.
     public func text(
         format: SubtitleFormat? = nil,
         lineEnding: LineEnding? = nil,
-        fps: Double? = nil,
-        samiTitle: String? = nil,
-        samiLanguageName: String = "English",
-        samiLanguageCode: String = "en-US",
-        closeSMITags: Bool = false
+        fps: Double? = nil
     ) throws -> String {
         let resolvedFormat = format
             ?? (formatName.flatMap { Self.engine.resolveFormat(named: $0) })
@@ -192,38 +224,23 @@ public struct Subtitle: Sendable, Hashable {
             throw SubtitleError.unableToDetectFormat
         }
 
-        return try Self.engine.serialize(
-            document,
-            options: SubtitleSerializeOptions(
-                format: resolvedFormat,
-                lineEnding: lineEnding ?? sourceLineEnding,
-                fps: fps,
-                samiTitle: samiTitle,
-                samiLanguageName: samiLanguageName,
-                samiLanguageCode: samiLanguageCode,
-                closeSMITags: closeSMITags
-            )
-        )
+        return try text(using: SubtitleSerializeOptions(
+            format: resolvedFormat,
+            lineEnding: lineEnding ?? sourceLineEnding,
+            fps: fps
+        ))
     }
 
-    /// Converts this subtitle value to another format and returns a parsed object.
+    /// Converts this subtitle value to another format and returns a new ``Subtitle``.
     public func convert(
         to format: SubtitleFormat,
         lineEnding: LineEnding? = nil,
-        fps: Double? = nil,
-        samiTitle: String? = nil,
-        samiLanguageName: String = "English",
-        samiLanguageCode: String = "en-US",
-        closeSMITags: Bool = false
+        fps: Double? = nil
     ) throws -> Subtitle {
         let convertedText = try text(
             format: format,
             lineEnding: lineEnding,
-            fps: fps,
-            samiTitle: samiTitle,
-            samiLanguageName: samiLanguageName,
-            samiLanguageCode: samiLanguageCode,
-            closeSMITags: closeSMITags
+            fps: fps
         )
         let parsed = try Self.engine.parse(
             convertedText,
@@ -236,26 +253,7 @@ public struct Subtitle: Sendable, Hashable {
         )
     }
 
-    /// Converts this subtitle value to another format and returns serialized text.
-    public func convertedText(
-        to format: SubtitleFormat,
-        lineEnding: LineEnding? = nil,
-        fps: Double? = nil,
-        samiTitle: String? = nil,
-        samiLanguageName: String = "English",
-        samiLanguageCode: String = "en-US",
-        closeSMITags: Bool = false
-    ) throws -> String {
-        try text(
-            format: format,
-            lineEnding: lineEnding,
-            fps: fps,
-            samiTitle: samiTitle,
-            samiLanguageName: samiLanguageName,
-            samiLanguageCode: samiLanguageCode,
-            closeSMITags: closeSMITags
-        )
-    }
+    // MARK: - Resync
 
     /// Returns a new subtitle with timing resync applied.
     public func resync(
@@ -289,16 +287,17 @@ public struct Subtitle: Sendable, Hashable {
         document = Self.engine.resyncDocument(document, using: transform)
     }
 
+    // MARK: - Save
+
     /// Serializes and writes this subtitle to disk.
+    ///
+    /// When `format` is `nil`, SubtitleKit infers from the file extension.
+    /// For SAMI-specific options, use the ``save(to:using:encoding:)`` overload.
     public func save(
         to fileURL: URL,
         format: SubtitleFormat? = nil,
         lineEnding: LineEnding? = nil,
         fps: Double? = nil,
-        samiTitle: String? = nil,
-        samiLanguageName: String = "English",
-        samiLanguageCode: String = "en-US",
-        closeSMITags: Bool = false,
         encoding: String.Encoding = .utf8
     ) throws {
         let extensionGuess = fileURL.pathExtension.isEmpty
@@ -308,13 +307,19 @@ public struct Subtitle: Sendable, Hashable {
         let output = try text(
             format: format ?? extensionGuess,
             lineEnding: lineEnding,
-            fps: fps,
-            samiTitle: samiTitle,
-            samiLanguageName: samiLanguageName,
-            samiLanguageCode: samiLanguageCode,
-            closeSMITags: closeSMITags
+            fps: fps
         )
 
+        try output.write(to: fileURL, atomically: true, encoding: encoding)
+    }
+
+    /// Serializes and writes this subtitle to disk using full options.
+    public func save(
+        to fileURL: URL,
+        using options: SubtitleSerializeOptions,
+        encoding: String.Encoding = .utf8
+    ) throws {
+        let output = try text(using: options)
         try output.write(to: fileURL, atomically: true, encoding: encoding)
     }
 }

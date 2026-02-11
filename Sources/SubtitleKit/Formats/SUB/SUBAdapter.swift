@@ -5,16 +5,15 @@ public struct SUBFormat: SubtitleFormat {
     public let name = "sub"
 
     public func canParse(_ content: String) -> Bool {
-        let text = TextSanitizer.stripByteOrderMark(from: content)
         guard let regex = try? NSRegularExpression(pattern: #"^\{\d+\}\{\d+\}.*$"#, options: [.anchorsMatchLines]) else {
             return false
         }
-        return RegexUtils.firstMatch(regex, in: text) != nil
+        return RegexUtils.firstMatch(regex, in: content) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
         let fps = try normalizedFPS(options.fps)
-        let normalized = TextSanitizer.stripByteOrderMark(from: content)
+        let normalized = content
         let lines = StringTransforms.lines(normalized)
         var entries: [SubtitleEntry] = []
 
@@ -35,8 +34,8 @@ public struct SUBFormat: SubtitleFormat {
             let plainText = StringTransforms.stripTags(rawText)
             let cue = SubtitleCue(
                 id: index + 1,
-                startTime: Int((Double(startFrame) / fps).rounded()),
-                endTime: Int((Double(endFrame) / fps).rounded()),
+                startTime: Int((Double(startFrame) / fps * 1_000).rounded()),
+                endTime: Int((Double(endFrame) / fps * 1_000).rounded()),
                 rawText: rawText,
                 plainText: plainText,
                 frameRange: .init(start: startFrame, end: endFrame)
@@ -53,12 +52,10 @@ public struct SUBFormat: SubtitleFormat {
         var lines: [String] = []
 
         for cue in document.cues {
-            let startFrame = cue.frameRange?.start ?? Int((Double(cue.startTime) * fps).rounded())
-            let endFrame = cue.frameRange?.end ?? Int((Double(cue.endTime) * fps).rounded())
-            var text = StringTransforms.cueText(from: cue)
-            if let newline = text.firstIndex(of: "\n") {
-                text.replaceSubrange(newline...newline, with: "|")
-            }
+            let startFrame = cue.frameRange?.start ?? Int((Double(cue.startTime) / 1_000 * fps).rounded())
+            let endFrame = cue.frameRange?.end ?? Int((Double(cue.endTime) / 1_000 * fps).rounded())
+            let text = StringTransforms.cueText(from: cue)
+                .replacingOccurrences(of: "\n", with: "|")
             lines.append("{\(startFrame)}{\(endFrame)}\(text)")
         }
 

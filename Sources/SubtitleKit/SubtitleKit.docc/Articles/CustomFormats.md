@@ -1,8 +1,12 @@
 # Custom Formats
 
-Extend SubtitleKit by implementing ``SubtitleFormat`` and registering it in ``SubtitleFormatRegistry``.
+Extend SubtitleKit with new subtitle formats by conforming to ``SubtitleFormat``
+and registering with ``SubtitleFormatRegistry``.
 
-## Define a format
+## Define a Format
+
+Create a struct conforming to ``SubtitleFormat``. You must implement `name`,
+`canParse(_:)`, `parse(_:options:)`, and `serialize(_:options:)`:
 
 ```swift
 import SubtitleKit
@@ -14,7 +18,10 @@ public struct LineFormat: SubtitleFormat {
     public init() {}
 
     public func canParse(_ content: String) -> Bool {
-        content.contains("|")
+        content.split(whereSeparator: \.isNewline).contains { line in
+            let parts = line.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
+            return parts.count == 3 && Int(parts[0]) != nil && Int(parts[1]) != nil
+        }
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws -> SubtitleDocument {
@@ -43,13 +50,16 @@ public struct LineFormat: SubtitleFormat {
     }
 
     public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws -> String {
-        let lines = document.cues.map { "\($0.startTime)|\($0.endTime)|\($0.rawText)" }
-        return lines.joined(separator: options.lineEnding.value)
+        let body = document.cues.map { "\($0.startTime)|\($0.endTime)|\($0.rawText)" }
+        return body.joined(separator: options.lineEnding.value)
+            + (body.isEmpty ? "" : options.lineEnding.value)
     }
 }
 ```
 
-## Add convenience access
+## Add Convenience Access
+
+Provide a static property so callers can use `.line` syntax:
 
 ```swift
 public extension SubtitleFormat where Self == LineFormat {
@@ -57,13 +67,30 @@ public extension SubtitleFormat where Self == LineFormat {
 }
 ```
 
-## Register and use
+## Register and Use
 
 ```swift
+// Register globally
 SubtitleFormatRegistry.register(.line)
 
+// Now auto-detection, parsing, and conversion all work
 let parsed = try Subtitle.parse(customText, format: .line)
-let asSRT = try parsed.convertedText(to: .srt)
+let srt = try parsed.text(format: .srt)
 ```
 
-`SubtitleFormatRegistry.current` is process-wide global state. In tests, call ``SubtitleFormatRegistry/resetCurrent()`` between cases to avoid leakage.
+## Thread Safety
+
+``SubtitleFormatRegistry/current`` is process-wide mutable state protected by
+an internal lock. Registration is atomic, but format implementations must also
+be `Sendable` and safe to call from any thread.
+
+In tests, call ``SubtitleFormatRegistry/resetCurrent()`` in a `defer` block
+to avoid cross-test leakage:
+
+```swift
+SubtitleFormatRegistry.resetCurrent()
+defer { SubtitleFormatRegistry.resetCurrent() }
+
+SubtitleFormatRegistry.register(.line)
+// ... test code ...
+```

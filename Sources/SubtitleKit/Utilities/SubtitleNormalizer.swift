@@ -4,12 +4,6 @@ struct SubtitleNormalizationResult: Sendable, Hashable {
     var text: String
     var lineEnding: LineEnding
     var hadByteOrderMark: Bool
-
-    init(text: String, lineEnding: LineEnding, hadByteOrderMark: Bool) {
-        self.text = text
-        self.lineEnding = lineEnding
-        self.hadByteOrderMark = hadByteOrderMark
-    }
 }
 
 enum SubtitleNormalizer {
@@ -21,10 +15,11 @@ enum SubtitleNormalizer {
     }
 
     static func stripByteOrderMark(_ text: String) -> String {
-        TextSanitizer.stripByteOrderMark(from: text)
+        guard text.unicodeScalars.first == "\u{FEFF}" else { return text }
+        return String(text.unicodeScalars.dropFirst())
     }
 
     static func inferLineEnding(_ text: String) -> LineEnding {
-        TextSanitizer.inferLineEnding(from: text)
+        text.contains("\r\n") ? .crlf : .lf
     }
 }
