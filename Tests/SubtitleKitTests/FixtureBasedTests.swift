@@ -4,6 +4,16 @@ import Testing
 
 @Suite("Fixture Parsing")
 struct FixtureParsingTests {
+    @Test("Parses embedded BOM SRT fixture")
+    func parseEmbeddedBOMSRTFixture() throws(any Error) {
+        let content = try FixtureSupport.fixtureText(
+            "embedded-bom-srt-fixture",
+            ext: "srt"
+        )
+        let subtitle = try Subtitle.parse(content, options: .init(format: .srt))
+        #expect(!subtitle.cues.isEmpty)
+    }
+
     @Test("Parses real fixtures", arguments: FixtureSupport.fixtureFormatNames)
     func parseFixture(for formatName: String) throws(any Error) {
         let format = FixtureSupport.format(named: formatName)
@@ -54,6 +64,14 @@ struct EdgeCaseTests {
 
         let output = try subtitle.text(format: .srt)
         #expect(output.contains("\r\n"))
+    }
+
+    @Test("Handles embedded BOM inside SRT stream")
+    func embeddedBOMInSRTStream() throws(any Error) {
+        let input = "0\n00:00:00,000 --> 00:00:01,000\nLead in\n\n\u{FEFF}1\n00:00:01,500 --> 00:00:03,000\nHello\n"
+        let subtitle = try Subtitle.parse(input, options: .init(format: .srt))
+        #expect(subtitle.cues.count == 2)
+        #expect(subtitle.cues[1].startTime == 1500)
     }
 
     @Test("Throws on malformed timestamp")

@@ -15,8 +15,7 @@ enum SubtitleNormalizer {
     }
 
     static func stripByteOrderMark(_ text: String) -> String {
-        guard text.unicodeScalars.first == "\u{FEFF}" else { return text }
-        return String(text.unicodeScalars.dropFirst())
+        text.replacingOccurrences(of: "\u{FEFF}", with: "")
     }
 
     static func inferLineEnding(_ text: String) -> LineEnding {
