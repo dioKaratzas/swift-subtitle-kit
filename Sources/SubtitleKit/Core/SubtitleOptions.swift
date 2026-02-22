@@ -99,6 +99,28 @@ public struct SubtitleResyncOptions: Sendable, Hashable {
     }
 }
 
+/// Cleaning operations for subtitle cue text.
+public enum SubtitleCleanOption: String, Sendable, Hashable, Codable, CaseIterable {
+    /// Removes hearing-impaired annotations like `[music]` and `(laughing)`.
+    case removeSDH
+    /// Removes promotional text, website links, and email lines.
+    case removeWatermarks
+    /// Removes speaker prefixes such as `GEORGE:` and `>> JOHN:`.
+    case removeSpeakerLabels
+    /// Drops cues containing music note symbols (`♪`, `♫`, `♬`, `♩`).
+    case removeCuesContainingMusicNotes
+    /// Collapses multi-line cue text into a single line.
+    case removeAllLineBreaks
+    /// Merges consecutive overlapping cues with identical text.
+    case mergeCuesWithSameText
+    /// Converts mostly uppercase cue text into sentence case.
+    case fixUppercaseText
+    /// Removes SubStation-style curly tags like `{\an8}`.
+    case removeCurlyBracketTags
+    /// Removes HTML-style tags like `<i>` and `<b>`.
+    case removeHTMLTags
+}
+
 /// Supported output line endings.
 public enum LineEnding: String, Sendable, Hashable, Codable {
     case lf = "\n"

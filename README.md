@@ -196,6 +196,38 @@ var mutable = subtitle
 mutable.applyResync(.init(offset: -500))
 ```
 
+## Cleaning Cue Text
+
+```swift
+let cleaned = subtitle.clean([
+    .removeSDH,
+    .removeWatermarks,
+    .removeSpeakerLabels,
+    .removeCuesContainingMusicNotes,
+    .removeAllLineBreaks,
+    .mergeCuesWithSameText,
+    .fixUppercaseText,
+    .removeCurlyBracketTags,
+    .removeHTMLTags
+])
+```
+
+Use `clean()` with no arguments to apply all built-in operations in default order, or `applyClean(...)` for the mutating variant.
+
+If you need change stats/details (remaining/removed/modified and cue-by-cue status):
+
+```swift
+let result = subtitle.cleanWithReport([.removeSDH, .removeSpeakerLabels])
+print(result.report.originalCueCount)
+print(result.report.remainingCueCount)
+print(result.report.modifiedCueCount)
+print(result.report.removedCueCount)
+
+for change in result.report.changes {
+    print(change.cueID, change.status, change.changedBy)
+}
+```
+
 ## Saving to File
 
 ```swift

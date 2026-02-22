@@ -114,4 +114,76 @@ struct SubtitleObjectAPITests {
             }
         }
     }
+
+    @Test("Async load and save round-trip")
+    func asyncLoadAndSaveRoundTrip() async throws(any Error) {
+        let subtitle = Subtitle(
+            document: .init(formatName: "srt", entries: [
+                .cue(.init(id: 1, startTime: 0, endTime: 500, rawText: "Hello", plainText: "Hello")),
+                .cue(.init(id: 2, startTime: 750, endTime: 1500, rawText: "World", plainText: "World")),
+            ]),
+            sourceLineEnding: .lf
+        )
+
+        let url = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("subtitlekit-async-roundtrip-\(UUID().uuidString).srt")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        try await subtitle.save(to: url)
+        let loaded = try await Subtitle.load(from: url)
+
+        #expect(loaded.cues.count == subtitle.cues.count)
+        #expect(loaded.cues.first?.plainText == "Hello")
+        #expect(loaded.cues.last?.plainText == "World")
+    }
+
+    @Test("Async load and save support concurrent batch processing")
+    func asyncConcurrentBatchProcessing() async throws(any Error) {
+        let tempDirectory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+            .appendingPathComponent("subtitlekit-batch-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDirectory) }
+
+        let fileURLs = (1...6).map { index in
+            tempDirectory.appendingPathComponent("sample-\(index).srt")
+        }
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for (index, url) in fileURLs.enumerated() {
+                group.addTask {
+                    let subtitle = Subtitle(
+                        document: .init(formatName: "srt", entries: [
+                            .cue(.init(
+                                id: index + 1,
+                                startTime: index * 1_000,
+                                endTime: (index * 1_000) + 750,
+                                rawText: "Line \(index + 1)",
+                                plainText: "Line \(index + 1)"
+                            ))
+                        ]),
+                        sourceLineEnding: .lf
+                    )
+                    try await subtitle.save(to: url)
+                }
+            }
+            try await group.waitForAll()
+        }
+
+        let loaded = try await withThrowingTaskGroup(of: Subtitle.self, returning: [Subtitle].self) { group in
+            for url in fileURLs {
+                group.addTask {
+                    try await Subtitle.load(from: url)
+                }
+            }
+
+            var subtitles: [Subtitle] = []
+            for try await subtitle in group {
+                subtitles.append(subtitle)
+            }
+            return subtitles
+        }
+
+        #expect(loaded.count == fileURLs.count)
+        #expect(loaded.allSatisfy { $0.cues.count == 1 })
+    }
 }

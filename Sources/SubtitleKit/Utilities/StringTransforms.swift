@@ -12,8 +12,13 @@ enum StringTransforms {
         replacing(pattern: #">>[^:\n]*:\s*"#, in: text, with: "")
     }
 
-    static func replacing(pattern: String, in text: String, with replacement: String) -> String {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+    static func replacing(
+        pattern: String,
+        in text: String,
+        with replacement: String,
+        regexOptions: NSRegularExpression.Options = [.caseInsensitive]
+    ) -> String {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: regexOptions) else {
             return text
         }
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
