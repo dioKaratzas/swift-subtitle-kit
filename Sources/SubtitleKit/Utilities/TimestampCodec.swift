@@ -1,8 +1,18 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 enum TimestampCodec {
     static func parseSRT(_ value: String) throws(SubtitleError) -> Int {
-        try parse(value, pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: false, formatName: "srt")
+        try parse(
+            value,
+            pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#,
+            hundredths: false,
+            formatName: "srt"
+        )
     }
 
     static func parseVTT(_ value: String) throws(SubtitleError) -> Int {
@@ -21,15 +31,31 @@ enum TimestampCodec {
     }
 
     static func parseSBV(_ value: String) throws(SubtitleError) -> Int {
-        try parse(value, pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: false, formatName: "sbv")
+        try parse(
+            value,
+            pattern: #"^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#,
+            hundredths: false,
+            formatName: "sbv"
+        )
     }
 
     static func parseSSA(_ value: String) throws(SubtitleError) -> Int {
-        try parse(value, pattern: #"^\s*(\d+):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: true, formatName: "ssa")
+        try parse(
+            value,
+            pattern: #"^\s*(\d+):(\d{1,2}):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#,
+            hundredths: true,
+            formatName: "ssa"
+        )
     }
 
     static func parseLRC(_ value: String) throws(SubtitleError) -> Int {
-        try parse(value, pattern: #"^\s*(\d+):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#, hundredths: true, formatName: "lrc", hasHours: false)
+        try parse(
+            value,
+            pattern: #"^\s*(\d+):(\d{1,2})(?:[\.,](\d{1,3}))?\s*$"#,
+            hundredths: true,
+            formatName: "lrc",
+            hasHours: false
+        )
     }
 
     static func formatSRT(_ milliseconds: Int) -> String {
@@ -81,8 +107,7 @@ enum TimestampCodec {
         } catch {
             throw SubtitleError.internalFailure(details: "Timestamp regex setup failed for \(formatName)")
         }
-        guard let match = RegexUtils.firstMatch(regex, in: value)
-        else {
+        guard let match = RegexUtils.firstMatch(regex, in: value) else {
             throw SubtitleError.invalidTimestamp(format: formatName, value: value)
         }
 
@@ -119,8 +144,7 @@ enum TimestampCodec {
         } catch {
             throw SubtitleError.internalFailure(details: "Timestamp regex setup failed for \(formatName)")
         }
-        guard let match = RegexUtils.firstMatch(regex, in: value)
-        else {
+        guard let match = RegexUtils.firstMatch(regex, in: value) else {
             return nil
         }
 

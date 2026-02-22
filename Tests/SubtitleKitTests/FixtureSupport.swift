@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 @testable import SubtitleKit
 
@@ -14,7 +19,7 @@ enum FixtureSupport {
         "json",
     ]
 
-    static func fixtureText(_ fileName: String, ext: String) throws(any Error) -> String {
+    static func fixtureText(_ fileName: String, ext: String) throws -> String {
         guard let baseURL = Bundle.module.resourceURL else {
             throw FixtureError.resourceBundleMissing
         }
@@ -28,7 +33,7 @@ enum FixtureSupport {
         return try String(contentsOf: url, encoding: .utf8)
     }
 
-    static func sampleText(for formatName: String) throws(any Error) -> String {
+    static func sampleText(for formatName: String) throws -> String {
         try fixtureText("sample", ext: formatName)
     }
 
@@ -58,10 +63,10 @@ enum FixtureSupport {
     }
 
     static func generatedSRT(cueCount: Int) -> String {
-        var chunks: [String] = []
+        var chunks = [String]()
         chunks.reserveCapacity(cueCount)
 
-        for index in 0..<cueCount {
+        for index in 0 ..< cueCount {
             let number = index + 1
             let start = index * 1500
             let end = start + 1200

@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// LRC (`.lrc`) subtitle format adapter.
@@ -11,19 +16,20 @@ public struct LRCFormat: SubtitleFormat {
     public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let lines = StringTransforms.lines(normalized)
-        var entries: [SubtitleEntry] = []
+        var entries = [SubtitleEntry]()
         var previousCueIndex: Int?
         var entryID = 1
 
         guard let lyricRegex = try? NSRegularExpression(pattern: #"^\[(\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?)\](.*)$"#),
-              let metaRegex = try? NSRegularExpression(pattern: #"^\[(\w+):([^\]]*)\]$"#)
-        else {
+              let metaRegex = try? NSRegularExpression(pattern: #"^\[(\w+):([^\]]*)\]$"#) else {
             throw SubtitleError.internalFailure(details: "LRC regex setup failed")
         }
 
         for line in lines {
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
+            guard !trimmed.isEmpty else {
+                continue
+            }
 
             if let match = RegexUtils.firstMatch(lyricRegex, in: line),
                let timeValue = RegexUtils.string(line, at: 1, in: match) {
@@ -65,7 +71,7 @@ public struct LRCFormat: SubtitleFormat {
 
     public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
-        var lines: [String] = []
+        var lines = [String]()
         var wroteLyrics = false
 
         for entry in document.entries {

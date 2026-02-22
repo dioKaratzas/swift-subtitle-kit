@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 enum StringTransforms {
@@ -18,10 +23,10 @@ enum StringTransforms {
         with replacement: String,
         regexOptions: NSRegularExpression.Options = [.caseInsensitive]
     ) -> String {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: regexOptions) else {
+        guard let regex = RegexUtils.compiled(pattern: pattern, options: regexOptions) else {
             return text
         }
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        let range = NSRange(text.startIndex ..< text.endIndex, in: text)
         return regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: replacement)
     }
 
@@ -30,19 +35,19 @@ enum StringTransforms {
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
 
-        guard let separator = try? NSRegularExpression(pattern: #"\n\s*\n"#) else {
+        guard let separator = RegexUtils.compiled(pattern: #"\n\s*\n"#) else {
             return [normalized]
         }
 
-        let fullRange = NSRange(normalized.startIndex..<normalized.endIndex, in: normalized)
-        var parts: [String] = []
+        let fullRange = NSRange(normalized.startIndex ..< normalized.endIndex, in: normalized)
+        var parts = [String]()
         var currentStart = normalized.startIndex
 
         separator.enumerateMatches(in: normalized, options: [], range: fullRange) { match, _, _ in
             guard let match, let range = Range(match.range, in: normalized) else {
                 return
             }
-            let chunk = String(normalized[currentStart..<range.lowerBound])
+            let chunk = String(normalized[currentStart ..< range.lowerBound])
             parts.append(chunk)
             currentStart = range.upperBound
         }

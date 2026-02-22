@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// SubRip (`.srt`) subtitle format adapter.
@@ -5,18 +10,23 @@ public struct SRTFormat: SubtitleFormat {
     public let name = "srt"
 
     public func canParse(_ content: String) -> Bool {
-        content.range(of: #"\d+\s*\n\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*-->\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
+        content.range(
+            of: #"\d+\s*\n\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*-->\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#,
+            options: .regularExpression
+        ) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
-        var cues: [SubtitleEntry] = []
+        var cues = [SubtitleEntry]()
         var index = 1
 
         for block in blocks {
             let lines = StringTransforms.lines(block)
-            guard !lines.isEmpty else { continue }
+            guard !lines.isEmpty else {
+                continue
+            }
 
             var timingLineIndex = 0
             var cueID = index
@@ -64,7 +74,7 @@ public struct SRTFormat: SubtitleFormat {
             return nil
         }
 
-        var output: [String] = []
+        var output = [String]()
         for (idx, cue) in cues.enumerated() {
             output.append(String(idx + 1))
             output.append("\(TimestampCodec.formatSRT(cue.startTime)) --> \(TimestampCodec.formatSRT(cue.endTime))")

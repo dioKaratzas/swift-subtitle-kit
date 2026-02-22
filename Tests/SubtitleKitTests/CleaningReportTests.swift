@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Testing
 @testable import SubtitleKit
 

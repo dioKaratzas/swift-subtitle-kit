@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// A subtitle format adapter that can detect, parse, and serialize subtitle content.
@@ -53,7 +58,9 @@ public protocol SubtitleFormat: Sendable {
 
 public extension SubtitleFormat {
     /// Uses the canonical name as the only alias by default.
-    var aliases: [String] { [name] }
+    var aliases: [String] {
+        [name]
+    }
 
     /// Registers this format in the current global ``SubtitleFormatRegistry``.
     func register() {
@@ -63,45 +70,63 @@ public extension SubtitleFormat {
 
 public extension SubtitleFormat where Self == SRTFormat {
     /// Built-in SubRip (`.srt`) format.
-    static var srt: SubtitleFormat { SRTFormat() }
+    static var srt: SubtitleFormat {
+        SRTFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == VTTFormat {
     /// Built-in WebVTT (`.vtt`) format.
-    static var vtt: SubtitleFormat { VTTFormat() }
+    static var vtt: SubtitleFormat {
+        VTTFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == SBVFormat {
     /// Built-in SubViewer (`.sbv`) format.
-    static var sbv: SubtitleFormat { SBVFormat() }
+    static var sbv: SubtitleFormat {
+        SBVFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == SUBFormat {
     /// Built-in MicroDVD (`.sub`) format.
-    static var sub: SubtitleFormat { SUBFormat() }
+    static var sub: SubtitleFormat {
+        SUBFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == SSAFormat {
     /// Built-in SSA (`.ssa`) format.
-    static var ssa: SubtitleFormat { SSAFormat() }
+    static var ssa: SubtitleFormat {
+        SSAFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == ASSFormat {
     /// Built-in ASS (`.ass`) format.
-    static var ass: SubtitleFormat { ASSFormat() }
+    static var ass: SubtitleFormat {
+        ASSFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == LRCFormat {
     /// Built-in LRC (`.lrc`) format.
-    static var lrc: SubtitleFormat { LRCFormat() }
+    static var lrc: SubtitleFormat {
+        LRCFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == SMIFormat {
     /// Built-in SAMI (`.smi`) format.
-    static var smi: SubtitleFormat { SMIFormat() }
+    static var smi: SubtitleFormat {
+        SMIFormat()
+    }
 }
 
 public extension SubtitleFormat where Self == JSONFormat {
     /// Built-in JSON compatibility format.
-    static var json: SubtitleFormat { JSONFormat() }
+    static var json: SubtitleFormat {
+        JSONFormat()
+    }
 }

@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// Output of a cleaning operation with transformed subtitle and a change report.
@@ -49,7 +54,9 @@ public struct SubtitleCleanReport: Sendable, Hashable {
             self.changedBy = changedBy
         }
 
-        public var id: Int { cueID }
+        public var id: Int {
+            cueID
+        }
     }
 
     /// Number of cues before cleaning.
@@ -71,16 +78,16 @@ public struct SubtitleCleanReport: Sendable, Hashable {
 
     /// Number of cues removed during cleaning.
     public var removedCueCount: Int {
-        changes.lazy.filter { $0.status == .removed }.count
+        changes.lazy.count(where: { $0.status == .removed })
     }
 
     /// Number of cues that changed but remained.
     public var modifiedCueCount: Int {
-        changes.lazy.filter { $0.status == .modified }.count
+        changes.lazy.count(where: { $0.status == .modified })
     }
 
     /// Number of cues unaffected by cleaning.
     public var unchangedCueCount: Int {
-        changes.lazy.filter { $0.status == .unchanged }.count
+        changes.lazy.count(where: { $0.status == .unchanged })
     }
 }

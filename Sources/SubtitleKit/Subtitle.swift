@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// Main object-first API for parsing, converting, resyncing, and saving subtitles.
@@ -37,7 +42,9 @@ public struct Subtitle: Sendable, Hashable {
 
     /// Resolved format adapter for ``formatName`` when available.
     public var format: SubtitleFormat? {
-        guard let formatName else { return nil }
+        guard let formatName else {
+            return nil
+        }
         return Self.engine.resolveFormat(named: formatName)
     }
 
@@ -403,7 +410,11 @@ public struct Subtitle: Sendable, Hashable {
 
     /// Returns a new subtitle with timing transformed by a custom closure.
     public func resync(
-        using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (Int, Int, SubtitleCue.FrameRange?)
+        using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (
+            Int,
+            Int,
+            SubtitleCue.FrameRange?
+        )
     ) -> Subtitle {
         var next = self
         next.document = Self.engine.resyncDocument(document, using: transform)
@@ -419,7 +430,11 @@ public struct Subtitle: Sendable, Hashable {
 
     /// Mutates this subtitle by applying a custom timing transform.
     public mutating func applyResync(
-        using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (Int, Int, SubtitleCue.FrameRange?)
+        using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (
+            Int,
+            Int,
+            SubtitleCue.FrameRange?
+        )
     ) {
         document = Self.engine.resyncDocument(document, using: transform)
     }

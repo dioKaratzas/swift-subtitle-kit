@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// SAMI (`.smi`) subtitle format adapter.
@@ -11,7 +16,7 @@ public struct SMIFormat: SubtitleFormat {
     public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let eol = "\n"
-        var entries: [SubtitleEntry] = []
+        var entries = [SubtitleEntry]()
         var entryID = 1
         guard let syncRegex = try? NSRegularExpression(
             pattern: #"^<SYNC[^>]+Start\s*=\s*[\"']?(\d+)[^\d>]*>([\s\S]*)"#,
@@ -39,7 +44,11 @@ public struct SMIFormat: SubtitleFormat {
 
         let body = normalized
             .replacingOccurrences(of: #"^[\s\S]*<BODY[^>]*>"#, with: "", options: [.regularExpression, .caseInsensitive])
-            .replacingOccurrences(of: #"</BODY[^>]*>[\s\S]*$"#, with: "", options: [.regularExpression, .caseInsensitive])
+            .replacingOccurrences(
+                of: #"</BODY[^>]*>[\s\S]*$"#,
+                with: "",
+                options: [.regularExpression, .caseInsensitive]
+            )
 
         var previousCueSlot: Int?
         let syncParts = body.components(separatedBy: "<SYNC")
@@ -48,8 +57,7 @@ public struct SMIFormat: SubtitleFormat {
             let part = "<SYNC" + rawPart
             guard let match = RegexUtils.firstMatch(syncRegex, in: part),
                   let startValue = RegexUtils.string(part, at: 1, in: match),
-                  let start = Int(startValue)
-            else {
+                  let start = Int(startValue) else {
                 throw SubtitleError.malformedBlock(format: "smi", details: part)
             }
 
@@ -69,12 +77,26 @@ public struct SMIFormat: SubtitleFormat {
             let pSource = contentValue.trimmingCharacters(in: .whitespacesAndNewlines)
             if let pMatch = RegexUtils.firstMatch(pRegex, in: pSource) {
                 var html = RegexUtils.string(pSource, at: 1, in: pMatch) ?? ""
-                html = html.replacingOccurrences(of: #"<P[\s\S]+$"#, with: "", options: [.regularExpression, .caseInsensitive])
-                html = html.replacingOccurrences(of: #"<BR\s*/?>\s+"#, with: eol, options: [.regularExpression, .caseInsensitive])
-                html = html.replacingOccurrences(of: #"<BR\s*/?>"#, with: eol, options: [.regularExpression, .caseInsensitive])
+                html = html.replacingOccurrences(
+                    of: #"<P[\s\S]+$"#,
+                    with: "",
+                    options: [.regularExpression, .caseInsensitive]
+                )
+                html = html.replacingOccurrences(
+                    of: #"<BR\s*/?>\s+"#,
+                    with: eol,
+                    options: [.regularExpression, .caseInsensitive]
+                )
+                html = html.replacingOccurrences(
+                    of: #"<BR\s*/?>"#,
+                    with: eol,
+                    options: [.regularExpression, .caseInsensitive]
+                )
                 html = html.replacingOccurrences(of: #"<[^>]+>"#, with: "", options: .regularExpression)
                 html = html.trimmingCharacters(in: .whitespacesAndNewlines)
-                blankCaption = html.replacingOccurrences(of: "&nbsp;", with: " ", options: [.caseInsensitive]).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                blankCaption = html.replacingOccurrences(of: "&nbsp;", with: " ", options: [.caseInsensitive]).trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ).isEmpty
                 cue.plainText = decodeHTML(html, eol: eol)
             }
 
@@ -98,14 +120,16 @@ public struct SMIFormat: SubtitleFormat {
 
     public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
-        var output: [String] = []
+        var output = [String]()
 
         output.append("<SAMI>")
         output.append("<HEAD>")
         output.append("<TITLE>\(options.samiTitle ?? "")</TITLE>")
         output.append("<STYLE TYPE=\"text/css\">")
         output.append("<!--")
-        output.append("P { font-family: Arial; font-weight: normal; color: white; background-color: black; text-align: center; }")
+        output.append(
+            "P { font-family: Arial; font-weight: normal; color: white; background-color: black; text-align: center; }"
+        )
         output.append(".LANG { Name: \(options.samiLanguageName); lang: \(options.samiLanguageCode); SAMIType: CC; }")
         output.append("-->")
         output.append("</STYLE>")
@@ -135,8 +159,7 @@ public struct SMIFormat: SubtitleFormat {
 
     private func firstCapture(_ pattern: String, in text: String, options: NSRegularExpression.Options = []) -> String? {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: options),
-              let match = RegexUtils.firstMatch(regex, in: text)
-        else {
+              let match = RegexUtils.firstMatch(regex, in: text) else {
             return nil
         }
         return RegexUtils.string(text, at: 1, in: match)

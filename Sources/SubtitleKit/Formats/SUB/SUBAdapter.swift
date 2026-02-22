@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// MicroDVD (`.sub`) subtitle format adapter.
@@ -15,7 +20,7 @@ public struct SUBFormat: SubtitleFormat {
         let fps = try normalizedFPS(options.fps)
         let normalized = content
         let lines = StringTransforms.lines(normalized)
-        var entries: [SubtitleEntry] = []
+        var entries = [SubtitleEntry]()
         guard let cueRegex = try? NSRegularExpression(pattern: #"^\{(\d+)\}\{(\d+)\}(.*)$"#) else {
             throw SubtitleError.internalFailure(details: "SUB cue regex setup failed")
         }
@@ -23,8 +28,7 @@ public struct SUBFormat: SubtitleFormat {
         for (index, line) in lines.enumerated() {
             guard let match = RegexUtils.firstMatch(cueRegex, in: line),
                   let startFrame = Int(RegexUtils.string(line, at: 1, in: match) ?? ""),
-                  let endFrame = Int(RegexUtils.string(line, at: 2, in: match) ?? "")
-            else {
+                  let endFrame = Int(RegexUtils.string(line, at: 2, in: match) ?? "") else {
                 if line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     continue
                 }
@@ -51,7 +55,7 @@ public struct SUBFormat: SubtitleFormat {
     public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let fps = try normalizedFPS(options.fps)
         let eol = options.lineEnding.value
-        var lines: [String] = []
+        var lines = [String]()
 
         for cue in document.cues {
             let startFrame = cue.frameRange?.start ?? Int((Double(cue.startTime) / 1_000 * fps).rounded())

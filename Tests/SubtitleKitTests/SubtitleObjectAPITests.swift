@@ -1,11 +1,16 @@
-import Foundation
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Testing
+import Foundation
 @testable import SubtitleKit
 
 @Suite("Subtitle Object API")
 struct SubtitleObjectAPITests {
     @Test("Parses into Subtitle object and converts")
-    func parseAndConvert() throws(any Error) {
+    func parseAndConvert() throws {
         let srt = "1\n00:00:00,250 --> 00:00:01,500\nHello\n"
         let subtitle = try Subtitle.parse(srt, format: .srt)
         #expect(subtitle.format.isEqual(.srt))
@@ -20,7 +25,7 @@ struct SubtitleObjectAPITests {
     }
 
     @Test("Resyncs and serializes from Subtitle object")
-    func resyncAndSerialize() throws(any Error) {
+    func resyncAndSerialize() throws {
         let subtitle = Subtitle(
             document: .init(formatName: "srt", entries: [
                 .cue(.init(id: 1, startTime: 1000, endTime: 1500, rawText: "Hi", plainText: "Hi"))
@@ -36,7 +41,7 @@ struct SubtitleObjectAPITests {
     }
 
     @Test("Saves subtitle file")
-    func saveToDisk() throws(any Error) {
+    func saveToDisk() throws {
         let subtitle = Subtitle(
             document: .init(formatName: "srt", entries: [
                 .cue(.init(id: 1, startTime: 0, endTime: 500, rawText: "Hello", plainText: "Hello"))
@@ -55,7 +60,7 @@ struct SubtitleObjectAPITests {
     }
 
     @Test("Save infers format from output extension")
-    func saveInfersOutputFormat() throws(any Error) {
+    func saveInfersOutputFormat() throws {
         let subtitle = Subtitle(
             document: .init(entries: [
                 .cue(.init(id: 1, startTime: 1000, endTime: 2000, rawText: "Hello", plainText: "Hello"))
@@ -80,7 +85,7 @@ struct SubtitleObjectAPITests {
         do {
             _ = try Subtitle.load(from: missingURL)
             Issue.record("Expected loading a missing file to throw")
-        } catch let error {
+        } catch {
             switch error {
             case let .fileReadFailed(path, details):
                 #expect(path == missingURL.path)
@@ -104,7 +109,7 @@ struct SubtitleObjectAPITests {
         do {
             try subtitle.save(to: directoryURL)
             Issue.record("Expected writing to a directory URL to throw")
-        } catch let error {
+        } catch {
             switch error {
             case let .fileWriteFailed(path, details):
                 #expect(path == directoryURL.path)
@@ -116,7 +121,7 @@ struct SubtitleObjectAPITests {
     }
 
     @Test("Async load and save round-trip")
-    func asyncLoadAndSaveRoundTrip() async throws(any Error) {
+    func asyncLoadAndSaveRoundTrip() async throws {
         let subtitle = Subtitle(
             document: .init(formatName: "srt", entries: [
                 .cue(.init(id: 1, startTime: 0, endTime: 500, rawText: "Hello", plainText: "Hello")),
@@ -138,13 +143,13 @@ struct SubtitleObjectAPITests {
     }
 
     @Test("Async load and save support concurrent batch processing")
-    func asyncConcurrentBatchProcessing() async throws(any Error) {
+    func asyncConcurrentBatchProcessing() async throws {
         let tempDirectory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
             .appendingPathComponent("subtitlekit-batch-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDirectory) }
 
-        let fileURLs = (1...6).map { index in
+        let fileURLs = (1 ... 6).map { index in
             tempDirectory.appendingPathComponent("sample-\(index).srt")
         }
 
@@ -176,7 +181,7 @@ struct SubtitleObjectAPITests {
                 }
             }
 
-            var subtitles: [Subtitle] = []
+            var subtitles = [Subtitle]()
             for try await subtitle in group {
                 subtitles.append(subtitle)
             }

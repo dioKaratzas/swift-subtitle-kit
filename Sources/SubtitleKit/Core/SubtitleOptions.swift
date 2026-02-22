@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// Parsing options for subtitle input.
@@ -77,10 +82,21 @@ public struct SubtitleSerializeOptions: Sendable {
 
     // MARK: - Internal convenience accessors (used by SMIAdapter)
 
-    var samiTitle: String? { sami.title }
-    var samiLanguageName: String { sami.languageName }
-    var samiLanguageCode: String { sami.languageCode }
-    var closeSMITags: Bool { sami.closeTags }
+    var samiTitle: String? {
+        sami.title
+    }
+
+    var samiLanguageName: String {
+        sami.languageName
+    }
+
+    var samiLanguageCode: String {
+        sami.languageCode
+    }
+
+    var closeSMITags: Bool {
+        sami.closeTags
+    }
 }
 
 /// Timing-shift options for resynchronizing subtitle cues.
@@ -126,5 +142,7 @@ public enum LineEnding: String, Sendable, Hashable, Codable {
     case lf = "\n"
     case crlf = "\r\n"
 
-    public var value: String { rawValue }
+    public var value: String {
+        rawValue
+    }
 }

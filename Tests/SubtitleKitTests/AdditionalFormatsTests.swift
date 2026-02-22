@@ -1,10 +1,15 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Testing
 @testable import SubtitleKit
 
 @Suite("Additional Format Adapters")
 struct AdditionalFormatsTests {
     @Test("Parses and serializes SSA")
-    func parseSerializeSSA() throws(any Error) {
+    func parseSerializeSSA() throws {
         let content = "[Script Info]\nScriptType: v4.00\n\n[V4 Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: Marked=0,0:00:01.00,0:00:02.50,Default,NTP,0000,0000,0000,,Hello\\NWorld\n"
         let parsed = try Subtitle.parse(content, options: .init(format: .ssa))
         #expect(parsed.cues.count == 1)
@@ -15,7 +20,7 @@ struct AdditionalFormatsTests {
     }
 
     @Test("Parses and serializes ASS")
-    func parseSerializeASS() throws(any Error) {
+    func parseSerializeASS() throws {
         let content = "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,NTP,0000,0000,0000,,{\\pos(1,1)}Hi\n"
         let parsed = try Subtitle.parse(content, options: .init(format: .ass))
         #expect(parsed.cues.count == 1)
@@ -26,20 +31,20 @@ struct AdditionalFormatsTests {
     }
 
     @Test("Parses and serializes SUB")
-    func parseSerializeSUB() throws(any Error) {
+    func parseSerializeSUB() throws {
         let content = "{25}{50}Line 1|Line 2\n"
         let parsed = try Subtitle.parse(content, options: .init(format: .sub, fps: 25))
         #expect(parsed.cues.count == 1)
         #expect(parsed.cues[0].frameRange?.start == 25)
-        #expect(parsed.cues[0].startTime == 1000)  // frame 25 / 25fps = 1s = 1000ms
-        #expect(parsed.cues[0].endTime == 2000)     // frame 50 / 25fps = 2s = 2000ms
+        #expect(parsed.cues[0].startTime == 1000) // frame 25 / 25fps = 1s = 1000ms
+        #expect(parsed.cues[0].endTime == 2000) // frame 50 / 25fps = 2s = 2000ms
 
         let serialized = try parsed.text(format: .sub, lineEnding: .lf, fps: 25)
         #expect(serialized.contains("{25}{50}"))
     }
 
     @Test("Parses and serializes LRC")
-    func parseSerializeLRC() throws(any Error) {
+    func parseSerializeLRC() throws {
         let content = "[ar:Artist]\n\n[00:01.00]Hello\n[00:03.00]World\n"
         let parsed = try Subtitle.parse(content, options: .init(format: .lrc))
         #expect(parsed.cues.count == 2)
@@ -50,7 +55,7 @@ struct AdditionalFormatsTests {
     }
 
     @Test("Parses and serializes SMI")
-    func parseSerializeSMI() throws(any Error) {
+    func parseSerializeSMI() throws {
         let content = "<SAMI><BODY><SYNC Start=1000><P Class=LANG>Hello<BR>World<SYNC Start=2000><P Class=LANG>&nbsp;</BODY></SAMI>"
         let parsed = try Subtitle.parse(content, options: .init(format: .smi))
         #expect(parsed.cues.count == 1)
@@ -61,7 +66,7 @@ struct AdditionalFormatsTests {
     }
 
     @Test("SUB converts to SRT with correct timestamps")
-    func subToSRTConversion() throws(any Error) {
+    func subToSRTConversion() throws {
         // Frame 0 at 25fps = 0ms, Frame 75 at 25fps = 3000ms
         let content = "{0}{75}Hello\n"
         let parsed = try Subtitle.parse(content, options: .init(format: .sub, fps: 25))
@@ -73,12 +78,16 @@ struct AdditionalFormatsTests {
     }
 
     @Test("SUB serializes all newlines as pipes")
-    func subMultiLineSerialize() throws(any Error) {
+    func subMultiLineSerialize() throws {
         let doc = SubtitleDocument(formatName: "sub", entries: [
-            .cue(.init(id: 1, startTime: 0, endTime: 2000,
-                        rawText: "Line 1\nLine 2\nLine 3",
-                        plainText: "Line 1\nLine 2\nLine 3",
-                        frameRange: .init(start: 0, end: 50)))
+            .cue(.init(
+                id: 1,
+                startTime: 0,
+                endTime: 2000,
+                rawText: "Line 1\nLine 2\nLine 3",
+                plainText: "Line 1\nLine 2\nLine 3",
+                frameRange: .init(start: 0, end: 50)
+            ))
         ])
         let subtitle = Subtitle(document: doc)
         let output = try subtitle.text(format: .sub, lineEnding: .lf, fps: 25)
@@ -93,7 +102,7 @@ struct AdditionalFormatsTests {
     }
 
     @Test("SMI parser handles closed SYNC tags")
-    func smiClosedSyncTags() throws(any Error) {
+    func smiClosedSyncTags() throws {
         let content = "<SAMI><BODY><SYNC Start=500></SYNC><SYNC Start=500><P Class=LANG>Hi</SYNC><SYNC Start=1500><P Class=LANG>&nbsp;</SYNC></BODY></SAMI>"
         let parsed = try Subtitle.parse(content, options: .init(format: .smi))
         #expect(!parsed.cues.isEmpty)

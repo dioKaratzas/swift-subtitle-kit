@@ -1,11 +1,16 @@
-import Foundation
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Testing
+import Foundation
 @testable import SubtitleKit
 
 @Suite("Fixture Parsing")
 struct FixtureParsingTests {
     @Test("Parses embedded BOM SRT fixture")
-    func parseEmbeddedBOMSRTFixture() throws(any Error) {
+    func parseEmbeddedBOMSRTFixture() throws {
         let content = try FixtureSupport.fixtureText(
             "embedded-bom-srt-fixture",
             ext: "srt"
@@ -15,7 +20,7 @@ struct FixtureParsingTests {
     }
 
     @Test("Parses real fixtures", arguments: FixtureSupport.fixtureFormatNames)
-    func parseFixture(for formatName: String) throws(any Error) {
+    func parseFixture(for formatName: String) throws {
         let format = FixtureSupport.format(named: formatName)
         let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
@@ -23,7 +28,7 @@ struct FixtureParsingTests {
     }
 
     @Test("Round-trips real fixtures", arguments: FixtureSupport.fixtureFormatNames)
-    func roundTripFixture(for formatName: String) throws(any Error) {
+    func roundTripFixture(for formatName: String) throws {
         let format = FixtureSupport.format(named: formatName)
         let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
@@ -36,7 +41,7 @@ struct FixtureParsingTests {
     }
 
     @Test("Converts fixture to SRT and VTT", arguments: FixtureSupport.fixtureFormatNames)
-    func convertFixture(for formatName: String) throws(any Error) {
+    func convertFixture(for formatName: String) throws {
         let format = FixtureSupport.format(named: formatName)
         let content = try FixtureSupport.sampleText(for: formatName)
         let subtitle = try Subtitle.parse(content, options: .init(format: format))
@@ -54,7 +59,7 @@ struct FixtureParsingTests {
 @Suite("Edge Cases")
 struct EdgeCaseTests {
     @Test("Handles BOM and CRLF")
-    func bomAndCRLF() throws(any Error) {
+    func bomAndCRLF() throws {
         let input = "\u{FEFF}1\r\n00:00:00,500 --> 00:00:02,000\r\nHello\r\n"
         let subtitle = try Subtitle.parse(input, options: .init(format: .srt))
 
@@ -67,7 +72,7 @@ struct EdgeCaseTests {
     }
 
     @Test("Handles embedded BOM inside SRT stream")
-    func embeddedBOMInSRTStream() throws(any Error) {
+    func embeddedBOMInSRTStream() throws {
         let input = "0\n00:00:00,000 --> 00:00:01,000\nLead in\n\n\u{FEFF}1\n00:00:01,500 --> 00:00:03,000\nHello\n"
         let subtitle = try Subtitle.parse(input, options: .init(format: .srt))
         #expect(subtitle.cues.count == 2)
@@ -83,7 +88,7 @@ struct EdgeCaseTests {
     }
 
     @Test("Handles empty metadata sections")
-    func emptyMetadataSections() throws(any Error) {
+    func emptyMetadataSections() throws {
         let vtt = "WEBVTT\n\nNOTE\n\n00:00.000 --> 00:01.000\nHello\n"
         let subtitle = try Subtitle.parse(vtt, options: .init(format: .vtt))
         #expect(subtitle.cues.count == 1)
@@ -91,13 +96,15 @@ struct EdgeCaseTests {
     }
 
     @Test("Handles metadata quirks")
-    func metadataQuirks() throws(any Error) {
+    func metadataQuirks() throws {
         let lrc = try FixtureSupport.sampleText(for: "lrc")
         let subtitle = try Subtitle.parse(lrc, options: .init(format: .lrc))
-        let metaCount = subtitle.entries.filter {
-            if case .metadata = $0 { return true }
+        let metaCount = subtitle.entries.count(where: {
+            if case .metadata = $0 {
+                return true
+            }
             return false
-        }.count
+        })
         #expect(metaCount > 0)
     }
 }
@@ -105,7 +112,7 @@ struct EdgeCaseTests {
 @Suite("Performance Sanity")
 struct PerformanceSanityTests {
     @Test("Parses and serializes large SRT within sanity threshold")
-    func largeSRTPerformance() throws(any Error) {
+    func largeSRTPerformance() throws {
         let cueCount = 8_000
         let srt = FixtureSupport.generatedSRT(cueCount: cueCount)
         let clock = ContinuousClock()

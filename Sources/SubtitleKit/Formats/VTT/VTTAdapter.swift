@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// WebVTT (`.vtt`) subtitle format adapter.
@@ -11,7 +16,7 @@ public struct VTTFormat: SubtitleFormat {
     public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
-        var entries: [SubtitleEntry] = []
+        var entries = [SubtitleEntry]()
         var cueIndex = 1
         var entryIndex = 1
         guard let timingRegex = try? NSRegularExpression(
@@ -22,10 +27,16 @@ public struct VTTFormat: SubtitleFormat {
 
         for block in blocks {
             let lines = StringTransforms.lines(block)
-            guard !lines.isEmpty else { continue }
+            guard !lines.isEmpty else {
+                continue
+            }
 
             if lines[0].trimmingCharacters(in: .whitespacesAndNewlines).uppercased().hasPrefix("WEBVTT") {
-                entries.append(.metadata(SubtitleMetadata(id: entryIndex, key: "WEBVTT", value: .text(lines.joined(separator: "\n")))))
+                entries.append(
+                    .metadata(
+                        SubtitleMetadata(id: entryIndex, key: "WEBVTT", value: .text(lines.joined(separator: "\n")))
+                    )
+                )
                 entryIndex += 1
                 continue
             }
@@ -49,12 +60,12 @@ public struct VTTFormat: SubtitleFormat {
                 }
                 let end = try TimestampCodec.parseVTT(String(endToken))
 
-                let cueIdentifier = timingIndex > 0 ? lines[0..<timingIndex].joined(separator: "\n") : nil
+                let cueIdentifier = timingIndex > 0 ? lines[0 ..< timingIndex].joined(separator: "\n") : nil
                 let settings = rhsPieces.count > 1 ? String(rhsPieces[1]) : nil
                 let textLines = Array(lines.dropFirst(timingIndex + 1))
                 let rawText = textLines.joined(separator: "\n")
 
-                var attributes: [SubtitleAttribute] = []
+                var attributes = [SubtitleAttribute]()
                 if let settings, !settings.isEmpty {
                     attributes.append(.init(key: "settings", value: settings))
                 }
@@ -89,20 +100,24 @@ public struct VTTFormat: SubtitleFormat {
 
     public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
-        var blocks: [String] = ["WEBVTT"]
+        var blocks = ["WEBVTT"]
 
         for entry in document.entries {
             switch entry {
             case let .metadata(meta):
-                if meta.key == "WEBVTT" { continue }
+                if meta.key == "WEBVTT" {
+                    continue
+                }
                 blocks.append(serializeMetadata(meta, eol: eol))
             case let .cue(cue):
-                var lines: [String] = []
+                var lines = [String]()
                 if let cueIdentifier = cue.cueIdentifier, !cueIdentifier.isEmpty {
                     lines.append(cueIdentifier)
                 }
                 let settings = cue.attributes.first(where: { $0.key == "settings" })?.value
-                let timing = "\(TimestampCodec.formatVTT(cue.startTime)) --> \(TimestampCodec.formatVTT(cue.endTime))" + (settings.map { " \($0)" } ?? "")
+                let timing = "\(TimestampCodec.formatVTT(cue.startTime)) --> \(TimestampCodec.formatVTT(cue.endTime))" + (
+                    settings.map { " \($0)" } ?? ""
+                )
                 lines.append(timing)
                 lines.append(StringTransforms.cueText(from: cue))
                 blocks.append(lines.joined(separator: eol))
@@ -116,7 +131,9 @@ public struct VTTFormat: SubtitleFormat {
 
     private func parseMetadata(block: String, id: Int) -> SubtitleMetadata? {
         let lines = StringTransforms.lines(block)
-        guard let firstLine = lines.first else { return nil }
+        guard let firstLine = lines.first else {
+            return nil
+        }
 
         let first = firstLine.trimmingCharacters(in: .whitespaces)
         if let range = first.range(of: " ") {

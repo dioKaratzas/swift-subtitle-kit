@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Testing
 @testable import SubtitleKit
 
@@ -16,14 +21,13 @@ private struct LineFormat: SubtitleFormat {
 
     func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let lines = content.split(whereSeparator: \.isNewline)
-        var entries: [SubtitleEntry] = []
+        var entries = [SubtitleEntry]()
 
         for (index, line) in lines.enumerated() {
             let parts = line.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)
             guard parts.count == 3,
                   let start = Int(parts[0]),
-                  let end = Int(parts[1])
-            else {
+                  let end = Int(parts[1]) else {
                 throw SubtitleError.malformedBlock(format: name, details: String(line))
             }
 
@@ -49,13 +53,15 @@ private struct LineFormat: SubtitleFormat {
 }
 
 extension SubtitleFormat where Self == LineFormat {
-    static var line: SubtitleFormat { LineFormat() }
+    static var line: SubtitleFormat {
+        LineFormat()
+    }
 }
 
 @Suite("Custom format registry")
 struct CustomFormatTests {
     @Test("Uses current registry with custom format")
-    func customRegistryFlow() throws(any Error) {
+    func customRegistryFlow() throws {
         SubtitleFormatRegistry.resetCurrent()
         defer { SubtitleFormatRegistry.resetCurrent() }
 

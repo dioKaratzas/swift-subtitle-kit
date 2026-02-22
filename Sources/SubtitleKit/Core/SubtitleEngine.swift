@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 struct SubtitleEngine: Sendable {
@@ -76,11 +81,17 @@ struct SubtitleEngine: Sendable {
 
     func resyncDocument(
         _ document: SubtitleDocument,
-        using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (Int, Int, SubtitleCue.FrameRange?)
+        using transform: @Sendable (_ start: Int, _ end: Int, _ frame: SubtitleCue.FrameRange?) -> (
+            Int,
+            Int,
+            SubtitleCue.FrameRange?
+        )
     ) -> SubtitleDocument {
         var updated = document
         updated.entries = updated.entries.map { entry in
-            guard case let .cue(cue) = entry else { return entry }
+            guard case let .cue(cue) = entry else {
+                return entry
+            }
             let (newStart, newEnd, newFrame) = transform(cue.startTime, cue.endTime, cue.frameRange)
             var next = cue
             next.startTime = newStart

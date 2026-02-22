@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 @testable import SubtitleKit
 
@@ -13,7 +18,9 @@ extension SubtitleFormat {
 
 extension Optional where Wrapped == SubtitleFormat {
     func isEqual(_ other: SubtitleFormat) -> Bool {
-        guard let format = self else { return false }
+        guard let format = self else {
+            return false
+        }
         return format.isEqual(other)
     }
 }

@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// SubViewer (`.sbv`) subtitle format adapter.
@@ -5,17 +10,22 @@ public struct SBVFormat: SubtitleFormat {
     public let name = "sbv"
 
     public func canParse(_ content: String) -> Bool {
-        content.range(of: #"\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*[,;]\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#, options: .regularExpression) != nil
+        content.range(
+            of: #"\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?\s*[,;]\s*\d{1,2}:\d{1,2}:\d{1,2}(?:[\.,]\d{1,3})?"#,
+            options: .regularExpression
+        ) != nil
     }
 
     public func parse(_ content: String, options: SubtitleParseOptions) throws(SubtitleError) -> SubtitleDocument {
         let normalized = content
         let blocks = StringTransforms.splitBlocks(normalized)
-        var entries: [SubtitleEntry] = []
+        var entries = [SubtitleEntry]()
 
         for (index, block) in blocks.enumerated() {
             let lines = StringTransforms.lines(block)
-            guard let timingLine = lines.first else { continue }
+            guard let timingLine = lines.first else {
+                continue
+            }
 
             let timingParts = timingLine.components(separatedBy: CharacterSet(charactersIn: ",;"))
             guard timingParts.count == 2 else {
@@ -44,11 +54,13 @@ public struct SBVFormat: SubtitleFormat {
 
     public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
         let eol = options.lineEnding.value
-        var blocks: [String] = []
+        var blocks = [String]()
 
         for entry in document.entries {
-            guard case let .cue(cue) = entry else { continue }
-            var lines: [String] = []
+            guard case let .cue(cue) = entry else {
+                continue
+            }
+            var lines = [String]()
             lines.append("\(TimestampCodec.formatSBV(cue.startTime)),\(TimestampCodec.formatSBV(cue.endTime))")
             lines.append(StringTransforms.cueText(from: cue))
             blocks.append(lines.joined(separator: eol))

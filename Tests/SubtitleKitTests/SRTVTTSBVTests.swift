@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Testing
 @testable import SubtitleKit
 
@@ -11,7 +16,7 @@ struct SRTVTTSBVTests {
     }
 
     @Test("Parses and serializes SRT")
-    func parseSerializeSRT() throws(any Error) {
+    func parseSerializeSRT() throws {
         let srt = "1\n00:00:00,500 --> 00:00:02,000\n>> JOHN: Hello <b>world</b>\n"
         let subtitle = try Subtitle.parse(srt, options: .init(format: .srt))
         let cue = try #require(subtitle.cues.first)
@@ -24,7 +29,7 @@ struct SRTVTTSBVTests {
     }
 
     @Test("Parses and serializes VTT")
-    func parseSerializeVTT() throws(any Error) {
+    func parseSerializeVTT() throws {
         let vtt = "WEBVTT\n\nNOTE\nMeta\n\nchapter-1\n00:01.000 --> 00:02.500 align:start\nHi <i>there</i>\n"
         let subtitle = try Subtitle.parse(vtt, options: .init(format: .vtt))
         #expect(subtitle.entries.count == 3)
@@ -39,7 +44,7 @@ struct SRTVTTSBVTests {
     }
 
     @Test("Parses and serializes SBV")
-    func parseSerializeSBV() throws(any Error) {
+    func parseSerializeSBV() throws {
         let sbv = "0:00:00.000,0:00:02.000\n>> ALICE: Line one[br]Line two\n"
         let subtitle = try Subtitle.parse(sbv, options: .init(format: .sbv))
 
@@ -52,7 +57,7 @@ struct SRTVTTSBVTests {
     }
 
     @Test("VTT serializes metadata with configured line ending")
-    func vttMetadataLineEnding() throws(any Error) {
+    func vttMetadataLineEnding() throws {
         let vtt = "WEBVTT\n\nNOTE\nSome comment\n\n00:00.000 --> 00:01.000\nHello\n"
         let subtitle = try Subtitle.parse(vtt, options: .init(format: .vtt))
         let output = try subtitle.text(format: .vtt, lineEnding: .crlf)

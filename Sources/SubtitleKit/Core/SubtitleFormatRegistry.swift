@@ -1,10 +1,15 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 private final class SubtitleFormatRegistryStore: @unchecked Sendable {
     static let shared = SubtitleFormatRegistryStore()
 
     private let lock = NSLock()
-    private var registry: SubtitleFormatRegistry = .standard
+    private var registry = SubtitleFormatRegistry.standard
 
     private init() {}
 
@@ -43,7 +48,7 @@ public struct SubtitleFormatRegistry: Sendable {
     private let detectionOrder: [SubtitleFormat]
 
     init(formats: [SubtitleFormat]) {
-        var map: [String: SubtitleFormat] = [:]
+        var map = [String: SubtitleFormat]()
         for format in formats {
             map[Self.normalize(format.name)] = format
             for alias in format.aliases {
@@ -82,7 +87,7 @@ public struct SubtitleFormatRegistry: Sendable {
 
     /// Canonical format names for the currently registered formats.
     public var supportedFormatNames: [String] {
-        var names: [String] = []
+        var names = [String]()
         for format in detectionOrder {
             if !names.contains(where: { Self.normalize($0) == Self.normalize(format.name) }) {
                 names.append(format.name)
@@ -121,13 +126,17 @@ public struct SubtitleFormatRegistry: Sendable {
 
     func resolve(fileExtension: String) -> SubtitleFormat? {
         let ext = fileExtension.trimmingCharacters(in: CharacterSet(charactersIn: "."))
-        guard !ext.isEmpty else { return nil }
+        guard !ext.isEmpty else {
+            return nil
+        }
         return resolve(name: ext)
     }
 
     func resolve(fileName: String) -> SubtitleFormat? {
         let trimmed = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let dot = trimmed.lastIndex(of: ".") else { return nil }
+        guard let dot = trimmed.lastIndex(of: ".") else {
+            return nil
+        }
         let ext = String(trimmed[trimmed.index(after: dot)...])
         return resolve(fileExtension: ext)
     }

@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// JSON compatibility subtitle adapter.
@@ -6,8 +11,12 @@ public struct JSONFormat: SubtitleFormat {
 
     public func canParse(_ content: String) -> Bool {
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.first == "[" || trimmed.first == "{" else { return false }
-        guard let data = trimmed.data(using: .utf8) else { return false }
+        guard trimmed.first == "[" || trimmed.first == "{" else {
+            return false
+        }
+        guard let data = trimmed.data(using: .utf8) else {
+            return false
+        }
         return (try? JSONSerialization.jsonObject(with: data)) != nil
     }
 
@@ -20,13 +29,16 @@ public struct JSONFormat: SubtitleFormat {
         do {
             jsonObject = try JSONSerialization.jsonObject(with: data)
         } catch {
-            throw SubtitleError.malformedBlock(format: "json", details: "Invalid JSON input: \(error.localizedDescription)")
+            throw SubtitleError.malformedBlock(
+                format: "json",
+                details: "Invalid JSON input: \(error.localizedDescription)"
+            )
         }
         guard let json = jsonObject as? [Any] else {
             throw SubtitleError.malformedBlock(format: "json", details: "Expected top-level JSON array")
         }
 
-        var entries: [SubtitleEntry] = []
+        var entries = [SubtitleEntry]()
         var fallbackID = 1
 
         for item in json {
@@ -47,7 +59,10 @@ public struct JSONFormat: SubtitleFormat {
                 if let dataString = object["data"] as? String {
                     entries.append(.metadata(.init(id: identifier, key: key, value: .text(dataString))))
                 } else if let dict = object["data"] as? [String: Any] {
-                    let fields = dict.keys.sorted().map { SubtitleAttribute(key: $0, value: String(describing: dict[$0] ?? "")) }
+                    let fields = dict.keys.sorted().map { SubtitleAttribute(
+                        key: $0,
+                        value: String(describing: dict[$0] ?? "")
+                    ) }
                     entries.append(.metadata(.init(id: identifier, key: key, value: .fields(fields))))
                 } else {
                     entries.append(.metadata(.init(id: identifier, key: key, value: .text(""))))
@@ -55,7 +70,10 @@ public struct JSONFormat: SubtitleFormat {
 
             case "style":
                 let data = (object["data"] as? [String: Any]) ?? [:]
-                let fields = data.keys.sorted().map { SubtitleAttribute(key: $0, value: String(describing: data[$0] ?? "")) }
+                let fields = data.keys.sorted().map { SubtitleAttribute(
+                    key: $0,
+                    value: String(describing: data[$0] ?? "")
+                ) }
                 let styleName = fields.first(where: { $0.key.caseInsensitiveCompare("name") == .orderedSame })?.value ?? "Style"
                 entries.append(.style(.init(id: identifier, name: styleName, fields: fields)))
 
@@ -65,9 +83,12 @@ public struct JSONFormat: SubtitleFormat {
                 let rawText = (object["content"] as? String) ?? (object["text"] as? String) ?? ""
                 let plainText = (object["text"] as? String) ?? rawText
 
-                var attributes: [SubtitleAttribute] = []
+                var attributes = [SubtitleAttribute]()
                 if let dataDict = object["data"] as? [String: Any] {
-                    attributes = dataDict.keys.sorted().map { SubtitleAttribute(key: $0, value: String(describing: dataDict[$0] ?? "")) }
+                    attributes = dataDict.keys.sorted().map { SubtitleAttribute(
+                        key: $0,
+                        value: String(describing: dataDict[$0] ?? "")
+                    ) }
                 }
 
                 var frameRange: SubtitleCue.FrameRange?
@@ -97,7 +118,7 @@ public struct JSONFormat: SubtitleFormat {
     }
 
     public func serialize(_ document: SubtitleDocument, options: SubtitleSerializeOptions) throws(SubtitleError) -> String {
-        var payload: [[String: Any]] = []
+        var payload = [[String: Any]]()
 
         for entry in document.entries {
             switch entry {
@@ -123,7 +144,10 @@ public struct JSONFormat: SubtitleFormat {
                     ]
                 }
                 if !cue.attributes.isEmpty {
-                    object["data"] = Dictionary(cue.attributes.map { ($0.key, $0.value) }, uniquingKeysWith: { _, last in last })
+                    object["data"] = Dictionary(
+                        cue.attributes.map { ($0.key, $0.value) },
+                        uniquingKeysWith: { _, last in last }
+                    )
                 }
                 payload.append(object)
 
@@ -153,7 +177,10 @@ public struct JSONFormat: SubtitleFormat {
         do {
             data = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
         } catch {
-            throw SubtitleError.malformedBlock(format: "json", details: "Unable to encode JSON output: \(error.localizedDescription)")
+            throw SubtitleError.malformedBlock(
+                format: "json",
+                details: "Unable to encode JSON output: \(error.localizedDescription)"
+            )
         }
         guard var output = String(data: data, encoding: .utf8) else {
             throw SubtitleError.malformedBlock(format: "json", details: "Unable to encode JSON output")
@@ -163,9 +190,15 @@ public struct JSONFormat: SubtitleFormat {
     }
 
     private func toInt(_ value: Any?) -> Int? {
-        if let int = value as? Int { return int }
-        if let double = value as? Double { return Int(double) }
-        if let string = value as? String, let int = Int(string) { return int }
+        if let int = value as? Int {
+            return int
+        }
+        if let double = value as? Double {
+            return Int(double)
+        }
+        if let string = value as? String, let int = Int(string) {
+            return int
+        }
         return nil
     }
 }

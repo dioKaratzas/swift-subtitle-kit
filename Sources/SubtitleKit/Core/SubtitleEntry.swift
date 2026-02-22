@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 /// Unified subtitle document model used across all formats.
@@ -15,7 +20,9 @@ public struct SubtitleDocument: Sendable, Hashable {
     /// All cue entries, in document order.
     public var cues: [SubtitleCue] {
         entries.compactMap {
-            if case let .cue(cue) = $0 { return cue }
+            if case let .cue(cue) = $0 {
+                return cue
+            }
             return nil
         }
     }
@@ -53,7 +60,9 @@ public struct SubtitleCue: Sendable, Hashable, Identifiable {
         }
 
         /// Number of frames in the range.
-        public var count: Int { end - start }
+        public var count: Int {
+            end - start
+        }
     }
 
     /// Cue identifier.
@@ -94,7 +103,9 @@ public struct SubtitleCue: Sendable, Hashable, Identifiable {
     }
 
     /// Cue duration in milliseconds.
-    public var duration: Int { endTime - startTime }
+    public var duration: Int {
+        endTime - startTime
+    }
 }
 
 /// Metadata entry in a subtitle document.

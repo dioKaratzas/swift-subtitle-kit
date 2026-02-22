@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Testing
 @testable import SubtitleKit
 
@@ -6,7 +11,13 @@ struct CleaningOptionsTests {
     @Test("Removes SDH markers")
     func removeSDH() {
         let subtitle = makeSubtitle(cues: [
-            .init(id: 1, startTime: 0, endTime: 1_000, rawText: "[MUSIC] (laughing) Hello there", plainText: "[MUSIC] (laughing) Hello there")
+            .init(
+                id: 1,
+                startTime: 0,
+                endTime: 1_000,
+                rawText: "[MUSIC] (laughing) Hello there",
+                plainText: "[MUSIC] (laughing) Hello there"
+            )
         ])
 
         let cleaned = subtitle.clean([.removeSDH])
@@ -18,9 +29,21 @@ struct CleaningOptionsTests {
     @Test("Removes watermark cues and lines")
     func removeWatermarks() {
         let subtitle = makeSubtitle(cues: [
-            .init(id: 1, startTime: 0, endTime: 1_000, rawText: "Subtitles by OpenSubtitles.org", plainText: "Subtitles by OpenSubtitles.org"),
+            .init(
+                id: 1,
+                startTime: 0,
+                endTime: 1_000,
+                rawText: "Subtitles by OpenSubtitles.org",
+                plainText: "Subtitles by OpenSubtitles.org"
+            ),
             .init(id: 2, startTime: 1_000, endTime: 2_000, rawText: "Hello world", plainText: "Hello world"),
-            .init(id: 3, startTime: 2_000, endTime: 3_000, rawText: "Visit www.example.com", plainText: "Visit www.example.com")
+            .init(
+                id: 3,
+                startTime: 2_000,
+                endTime: 3_000,
+                rawText: "Visit www.example.com",
+                plainText: "Visit www.example.com"
+            )
         ])
 
         let cleaned = subtitle.clean([.removeWatermarks])
@@ -31,7 +54,13 @@ struct CleaningOptionsTests {
     @Test("Removes speaker labels")
     func removeSpeakerLabels() {
         let subtitle = makeSubtitle(cues: [
-            .init(id: 1, startTime: 0, endTime: 1_000, rawText: "GEORGE: Hello\n>> ANNA: Hi", plainText: "GEORGE: Hello\n>> ANNA: Hi")
+            .init(
+                id: 1,
+                startTime: 0,
+                endTime: 1_000,
+                rawText: "GEORGE: Hello\n>> ANNA: Hi",
+                plainText: "GEORGE: Hello\n>> ANNA: Hi"
+            )
         ])
 
         let cleaned = subtitle.clean([.removeSpeakerLabels])
@@ -78,7 +107,13 @@ struct CleaningOptionsTests {
     @Test("Fixes mostly uppercase text")
     func fixUppercaseText() {
         let subtitle = makeSubtitle(cues: [
-            .init(id: 1, startTime: 0, endTime: 1_000, rawText: "HELLO WORLD. HOW ARE YOU?", plainText: "HELLO WORLD. HOW ARE YOU?")
+            .init(
+                id: 1,
+                startTime: 0,
+                endTime: 1_000,
+                rawText: "HELLO WORLD. HOW ARE YOU?",
+                plainText: "HELLO WORLD. HOW ARE YOU?"
+            )
         ])
 
         let cleaned = subtitle.clean([.fixUppercaseText])
@@ -98,7 +133,13 @@ struct CleaningOptionsTests {
     @Test("Removes HTML tags")
     func removeHTMLTags() {
         let subtitle = makeSubtitle(cues: [
-            .init(id: 1, startTime: 0, endTime: 1_000, rawText: "<i>Hello</i> <b>world</b>", plainText: "<i>Hello</i> <b>world</b>")
+            .init(
+                id: 1,
+                startTime: 0,
+                endTime: 1_000,
+                rawText: "<i>Hello</i> <b>world</b>",
+                plainText: "<i>Hello</i> <b>world</b>"
+            )
         ])
 
         let cleaned = subtitle.clean([.removeHTMLTags])

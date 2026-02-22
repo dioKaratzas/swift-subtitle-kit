@@ -1,3 +1,8 @@
+//
+//  SubsTranslatorBackend
+//  Subtitle translation backend.
+//
+
 import Foundation
 
 enum SubtitleCleaner {
@@ -7,8 +12,8 @@ enum SubtitleCleaner {
     }
 
     private struct ChangeTracker {
-        var modifiedByCueID: [Int: Set<SubtitleCleanOption>] = [:]
-        var removedByCueID: [Int: Set<SubtitleCleanOption>] = [:]
+        var modifiedByCueID = [Int: Set<SubtitleCleanOption>]()
+        var removedByCueID = [Int: Set<SubtitleCleanOption>]()
 
         mutating func noteModified(cueID: Int, by option: SubtitleCleanOption) {
             modifiedByCueID[cueID, default: []].insert(option)
@@ -58,7 +63,7 @@ enum SubtitleCleaner {
     }
 
     private static func deduplicated(_ options: [SubtitleCleanOption]) -> [SubtitleCleanOption] {
-        var seen: Set<SubtitleCleanOption> = []
+        var seen = Set<SubtitleCleanOption>()
         return options.filter { seen.insert($0).inserted }
     }
 
@@ -142,7 +147,9 @@ enum SubtitleCleaner {
     ) -> SubtitleDocument {
         var updated = document
         updated.entries = updated.entries.compactMap { entry in
-            guard case let .cue(cue) = entry else { return entry }
+            guard case let .cue(cue) = entry else {
+                return entry
+            }
             guard let transformed = transform(cue) else {
                 tracker.noteRemoved(cueID: cue.id, by: option)
                 return nil
@@ -177,7 +184,9 @@ enum SubtitleCleaner {
             resolvedPlain = StringTransforms.stripTags(resolvedRaw)
         }
 
-        guard !resolvedRaw.isEmpty || !resolvedPlain.isEmpty else { return nil }
+        guard !resolvedRaw.isEmpty || !resolvedPlain.isEmpty else {
+            return nil
+        }
 
         var next = cue
         next.rawText = resolvedRaw
@@ -213,7 +222,9 @@ enum SubtitleCleaner {
     }
 
     private static func isWatermarkLine(_ line: String) -> Bool {
-        guard !line.isEmpty else { return false }
+        guard !line.isEmpty else {
+            return false
+        }
         let patterns = [
             #"(?:https?://|www\.)\S+"#,
             #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#,
@@ -253,7 +264,9 @@ enum SubtitleCleaner {
     }
 
     private static func fixingUppercaseText(in text: String) -> String {
-        guard isMostlyUppercase(text) else { return text }
+        guard isMostlyUppercase(text) else {
+            return text
+        }
 
         let lowercased = text.lowercased()
         var output = ""
@@ -277,12 +290,14 @@ enum SubtitleCleaner {
 
     private static func isMostlyUppercase(_ text: String) -> Bool {
         let letters = text.unicodeScalars.filter { CharacterSet.letters.contains($0) }
-        guard letters.count >= 3 else { return false }
+        guard letters.count >= 3 else {
+            return false
+        }
 
-        let uppercaseCount = letters.filter { scalar in
+        let uppercaseCount = letters.count(where: { scalar in
             let string = String(scalar)
             return string == string.uppercased() && string != string.lowercased()
-        }.count
+        })
 
         return Double(uppercaseCount) / Double(letters.count) >= 0.8
     }
@@ -303,7 +318,7 @@ enum SubtitleCleaner {
         in document: SubtitleDocument,
         tracker: inout ChangeTracker
     ) -> SubtitleDocument {
-        var mergedEntries: [SubtitleEntry] = []
+        var mergedEntries = [SubtitleEntry]()
 
         for entry in document.entries {
             guard case let .cue(incomingCue) = entry else {
@@ -341,8 +356,12 @@ enum SubtitleCleaner {
     }
 
     private static func canMerge(_ lhs: SubtitleCue, _ rhs: SubtitleCue) -> Bool {
-        guard lhs.startTime <= rhs.startTime else { return false }
-        guard rhs.startTime <= lhs.endTime else { return false }
+        guard lhs.startTime <= rhs.startTime else {
+            return false
+        }
+        guard rhs.startTime <= lhs.endTime else {
+            return false
+        }
         return normalizedTextForMerge(lhs) == normalizedTextForMerge(rhs)
     }
 
