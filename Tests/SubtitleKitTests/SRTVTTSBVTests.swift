@@ -28,6 +28,27 @@ struct SRTVTTSBVTests {
         #expect(rebuilt.contains("00:00:00,500 --> 00:00:02,000"))
     }
 
+    @Test("Parses SRT without blank separator lines between cues")
+    func parseSRTWithoutBlankSeparators() throws {
+        let srt = """
+        1\r
+        00:00:00,500 --> 00:00:02,000\r
+        First line\r
+        2\r
+        00:00:02,500 --> 00:00:04,000\r
+        Second line\r
+        3\r
+        00:00:04,500 --> 00:00:06,000\r
+        Third line
+        """
+
+        let subtitle = try Subtitle.parse(srt, options: .init(format: .srt))
+        #expect(subtitle.cues.count == 3)
+        #expect(subtitle.cues[0].rawText == "First line")
+        #expect(subtitle.cues[1].rawText == "Second line")
+        #expect(subtitle.cues[2].rawText == "Third line")
+    }
+
     @Test("Parses and serializes VTT")
     func parseSerializeVTT() throws {
         let vtt = "WEBVTT\n\nNOTE\nMeta\n\nchapter-1\n00:01.000 --> 00:02.500 align:start\nHi <i>there</i>\n"
