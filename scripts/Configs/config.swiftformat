@@ -35,7 +35,7 @@
 --group-blank-lines true
 --grouped-extension "MARK: %c"
 --guard-else same-line
---header "//\n//  SubsTranslatorBackend\n//  Subtitle translation backend.\n//"
+--header "//\n//  SubtitleKit\n//  A Swift 6 library for parsing, converting, resyncing, and saving subtitle files.\n//"
 --hex-grouping 4,8
 --hex-literal-case uppercase
 --ifdef indent

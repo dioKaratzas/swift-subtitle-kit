@@ -1,6 +1,6 @@
 //
-//  SubsTranslatorBackend
-//  Subtitle translation backend.
+//  SubtitleKit
+//  A Swift 6 library for parsing, converting, resyncing, and saving subtitle files.
 //
 
 import Combine
